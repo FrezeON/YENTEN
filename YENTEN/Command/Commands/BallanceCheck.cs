@@ -113,7 +113,7 @@ namespace YENTEN.Command.Commands
             return new string(arr);
         }
 
-        static string getResponse(string uri)
+        public static string getResponse(string uri)
         {
             StringBuilder sb = new StringBuilder();
             byte[] buf = new byte[8192];
