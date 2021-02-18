@@ -22,7 +22,7 @@ namespace YENTEN.Command.CMDcommands
             //
 
             //Вносим кошельки в конец базы
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             connection.Open();
             SQLiteCommand Sqlcmd = connection.CreateCommand();
                   for (int i=0; i< Wallets.Length; i++)

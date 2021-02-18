@@ -31,7 +31,7 @@ namespace YENTEN.Command.Commands
             //
 
 
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             connection.Open();
             Sqlcmd.CommandText = "SELECT rowid FROM UserInfo WHERE TelegramID=" + message.Chat.Id;

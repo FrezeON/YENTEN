@@ -24,7 +24,7 @@ namespace YENTEN.Command.Commands.Game
         {
 
 
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
 
             connection.Open();

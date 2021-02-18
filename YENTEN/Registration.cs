@@ -16,7 +16,7 @@ namespace YENTEN
 
         public static async void StrartReg (Message message, TelegramBotClient client)
         {
-         connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+         connection = new SQLiteConnection("Data Source=MainDB1.db");
          SQLiteCommand Sqlcmd = connection.CreateCommand();
          string UserWallet = message.Text;
         connection.Open();

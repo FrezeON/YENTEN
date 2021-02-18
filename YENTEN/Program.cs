@@ -19,7 +19,6 @@ namespace YENTEN
         private static List<Command.Command> commands;
         private static List<Command.CMDcommand> commandsCMD;
         private static SQLiteConnection connection;
-        private static Timer aTimer;
 
         static void Main(string[] args)
         {
@@ -52,7 +51,7 @@ namespace YENTEN
             
 
         }
-        private static async void OnConsoleHandler()
+        private static void OnConsoleHandler()
         {
             string commandText = Console.ReadLine();
             if (commandText != null)
@@ -66,7 +65,7 @@ namespace YENTEN
                 }
             }
         }
-        private static async void OnMessageHandler(object sender, MessageEventArgs e)
+        private static void OnMessageHandler(object sender, MessageEventArgs e)
         {
             var message = e.Message;
             

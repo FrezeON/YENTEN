@@ -14,10 +14,10 @@ namespace YENTEN.Command.Commands.Game
         private static SQLiteConnection connection;
         public override string[] Names { get; set; } = new string[] { "Игра", "Войти в игру" };
 
-        public override async void Execute(Message message, TelegramBotClient client)
+        public override void Execute(Message message, TelegramBotClient client)
         {
 
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             //Подсчет суммы по командам     Количество игроков в командах     Head - орёл Tails- Решка
             double TeamHeadAmount =0;

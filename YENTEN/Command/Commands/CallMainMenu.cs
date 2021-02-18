@@ -11,7 +11,7 @@ namespace YENTEN.Command.Commands
     {
         public override string[] Names { get; set; } = new string[] {"Меню", "Menu"};
 
-        public override async void Execute(Message message, TelegramBotClient client)
+        public override void Execute(Message message, TelegramBotClient client)
         {
             MainMenu.SendMAinMenu(client, message);
         }

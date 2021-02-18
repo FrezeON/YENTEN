@@ -18,7 +18,7 @@ namespace YENTEN.Command.Commands
        
         public override async void Execute(Message message, TelegramBotClient client)
         {
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             connection.Open();
            SQLiteCommand Sqlcmd = connection.CreateCommand();
            Sqlcmd.CommandText = "SELECT count(*) FROM UserInfo WHERE TelegramID=" + message.Chat.Id;
