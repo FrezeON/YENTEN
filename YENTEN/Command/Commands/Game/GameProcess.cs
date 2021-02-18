@@ -206,6 +206,39 @@ namespace YENTEN.Command.Commands.Game
             {
                 Console.WriteLine("Пользователь: "+AllArray[i]);
             }
+            //
+
+            //Записываем всех пользователей
+            int AllCounter = 0;
+            connection.Open();
+            Sqlcmd.CommandText = "SELECT TelegramID FROM CurrentGame";
+            SQLiteDataReader reader = Sqlcmd.ExecuteReader();
+            while (reader.Read())
+            {
+                AllArray[AllCounter] = reader["TelegramID"].ToString();
+                AllCounter++;
+            }
+            reader.Close();
+            connection.Close();
+            //
+
+            //Добавляем в лог запись игры
+            string appendText = DateTime.Now + "  [Log]: Game № " +
+                "\nКоличество участников: "+(TeamHeadCount+TeamTailsCount)
+                +"\nКоличество участников команда Ореёл: "+TeamHeadCount+"  Баланс команды: "+TeamHeadAmount
+                + "\nКоличество участников команда Решка: " + TeamTailsCount + "  Баланс команды: " + TeamTailsAmount
+                + "\nОбщая ставка: "+(TeamHeadAmount+TeamTailsAmount)
+                +"\nПобедила команда: "+TeamWinID + Environment.NewLine;
+
+            System.IO.File.AppendAllText(@"D:\YentLuckyBot\log.txt", appendText);
+            //
+
+
+            //
+            for (int i =0; i < (TeamHeadCount+TeamTailsCount); i++)
+            {
+                Console.WriteLine("Пользователь: "+AllArray[i]);
+            }
 
             //
         }
