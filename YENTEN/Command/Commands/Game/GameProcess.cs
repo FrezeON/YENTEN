@@ -1,7 +1,8 @@
 ﻿using System;
+using System.IO;
+using System.Text;
 using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Text;
 using System.Timers;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -36,6 +37,10 @@ namespace YENTEN.Command.Commands.Game
             if (TeamHeadCount != 0 && TeamTailsCount != 0)
             {
                 GameLogic(connection, Sqlcmd, TeamHeadCount, TeamTailsCount);
+                connection.Open();
+                Sqlcmd.CommandText ="DELETE FROM CurrentGame";
+                Sqlcmd.ExecuteNonQuery();
+                connection.Close();
             }
         }
 
@@ -71,10 +76,14 @@ namespace YENTEN.Command.Commands.Game
                 }
             }
             connection.Close();
-
+            //
+            string[] AllArray = new string[(TeamHeadCount + TeamTailsCount)];
+            int Count = 0;
+            //
             if (TeamWinID == 0)
             {
-                for(int i =0; i < TeamHeadCount; i++)
+                string[] WinnersArray = new string[TeamHeadCount]; 
+                for (int i =0; i < TeamHeadCount; i++)
                 {
                     connection.Open();
 
@@ -101,6 +110,11 @@ namespace YENTEN.Command.Commands.Game
                     Sqlcmd.ExecuteNonQuery();
                     connection.Close();
                     //
+                    //Записываем победителей
+                    WinnersArray[Count] = Convert.ToString(UserWinerTelegramID);
+                    Count++;
+                    //
+
 
                     //Удаляем запись из CurrentGame;
                     connection.Open();
@@ -110,12 +124,14 @@ namespace YENTEN.Command.Commands.Game
                     //
                     Console.WriteLine(UserWinerTelegramID + "    HW:   "+(TeamTailsAmount * (UserWinerPercent / 100))+"      W" + UserWinerAmount+"  B "+UserWinerBallance+"   W+B  "+(UserWinerBallance+UserWinerAmount));
 
+
                 }
 
             }
             else
             {
-                for (int i = 0; i < TeamHeadCount; i++)
+                string[] WinnersArray = new string[TeamTailsCount];
+                for (int i = 0; i < TeamTailsCount; i++)
                 {
                     connection.Open();
 
@@ -143,6 +159,11 @@ namespace YENTEN.Command.Commands.Game
                     connection.Close();
                     //
 
+                    //Записываем победителей
+                    WinnersArray[Count] = Convert.ToString(UserWinerTelegramID);
+                    Count++;
+                    //
+
                     //Удаляем запись из CurrentGame;
                     connection.Open();
                     Sqlcmd.CommandText = "DELETE FROM CurrentGame WHERE TelegramID=" + UserWinerTelegramID;
@@ -153,6 +174,39 @@ namespace YENTEN.Command.Commands.Game
 
                 }
             }
+
+            //Записываем всех пользователей
+            int AllCounter = 0;
+            connection.Open();
+            Sqlcmd.CommandText = "SELECT TelegramID FROM CurrentGame";
+            SQLiteDataReader reader = Sqlcmd.ExecuteReader();
+            while (reader.Read())
+            {
+                AllArray[AllCounter] = reader["TelegramID"].ToString();
+                AllCounter++;
+            }
+            reader.Close();
+            connection.Close();
+            //
+
+            //Добавляем в лог запись игры
+            string appendText = DateTime.Now + "  [Log]: Game № " +
+                "\nКоличество участников: "+(TeamHeadCount+TeamTailsCount)
+                +"\nКоличество участников команда Ореёл: "+TeamHeadCount+"  Баланс команды: "+TeamHeadAmount
+                + "\nКоличество участников команда Решка: " + TeamTailsCount + "  Баланс команды: " + TeamTailsAmount
+                + "\nОбщая ставка: "+(TeamHeadAmount+TeamTailsAmount)
+                +"\nПобедила команда: "+TeamWinID + Environment.NewLine;
+
+            System.IO.File.AppendAllText(@"D:\YentLuckyBot\log.txt", appendText);
+            //
+
+
+            //
+            for (int i =0; i < (TeamHeadCount+TeamTailsCount); i++)
+            {
+                Console.WriteLine("Пользователь: "+AllArray[i]);
+            }
+            //
         }
 
 

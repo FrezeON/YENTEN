@@ -22,9 +22,9 @@ namespace YENTEN.Command.Commands
             connection.Open();
            SQLiteCommand Sqlcmd = connection.CreateCommand();
            Sqlcmd.CommandText = "SELECT count(*) FROM UserInfo WHERE TelegramID=" + message.Chat.Id;
-           int count = Convert.ToInt32(Sqlcmd.ExecuteScalar());
+           int UserExist = Convert.ToInt32(Sqlcmd.ExecuteScalar());
             connection.Close();
-           if (count != 0)
+           if (UserExist != 0)
            {
             await client.SendTextMessageAsync(message.Chat.Id, "Вы уже зарегистрированы!");
            }
