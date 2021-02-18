@@ -27,7 +27,6 @@ namespace YENTEN.Command.Commands.Game
             int UserExist = Convert.ToInt32(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
             double AmountInCurrentGame = Convert.ToDouble(Sqlcmd.ExecuteScalar());
-            Console.WriteLine(AmountInCurrentGame);
             connection.Close();
 
             //Получаем ID команды

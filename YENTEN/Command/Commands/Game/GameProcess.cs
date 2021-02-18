@@ -235,13 +235,14 @@ namespace YENTEN.Command.Commands.Game
             connection.Open();
             Sqlcmd.CommandText = "SELECT max(GameID) FROM GameHistory";
             int GameID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "INSERT INTO GameHistory VALUES(@GameID, @Losers, @Winners, @AllPlayers, @GameDate, @Team)";
+            Sqlcmd.CommandText = "INSERT INTO GameHistory VALUES(@GameID, @Losers, @Winners, @AllPlayers, @GameDate, @Team, @NotificationStatus)";
             Sqlcmd.Parameters.AddWithValue("@GameID", (GameID+1));
             Sqlcmd.Parameters.AddWithValue("@Losers", Losers);
             Sqlcmd.Parameters.AddWithValue("@Winners", Winners);
             Sqlcmd.Parameters.AddWithValue("@AllPlayers", AllPlayers);
             Sqlcmd.Parameters.AddWithValue("@GameDate", unixTimestamp);
             Sqlcmd.Parameters.AddWithValue("@Team", Team);
+            Sqlcmd.Parameters.AddWithValue("@NotificationStatus", 0);
             Sqlcmd.ExecuteNonQuery();
 
             connection.Close();

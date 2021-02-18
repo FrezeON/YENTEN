@@ -14,7 +14,7 @@ namespace YENTEN
 {
     class Program
     {
-       
+        private static Timer aTimer;
         private static TelegramBotClient client;
         private static List<Command.Command> commands;
         private static List<Command.CMDcommand> commandsCMD;
@@ -41,7 +41,7 @@ namespace YENTEN
             commandsCMD.Add(new ImputNewWallet());
             commandsCMD.Add(new StartAndStopGame());
             // Cписок команд заканчивается здесь(для консоли)
-            
+            SetTimer();
             client.StartReceiving();
             client.OnMessage += OnMessageHandler;
             Console.WriteLine(DateTime.Now+ "  [Log]: Bot started");
@@ -91,6 +91,13 @@ namespace YENTEN
             }
         }
 
+        public static void SetTimer()
+        {
+            aTimer = new System.Timers.Timer(10000);
 
+            aTimer.Elapsed += NotifyUserAfterGame.SenNotification;
+            aTimer.AutoReset = true;
+            aTimer.Enabled = true;
+        }
     }
 }

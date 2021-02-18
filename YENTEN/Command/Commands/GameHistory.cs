@@ -40,14 +40,12 @@ namespace YENTEN.Command.Commands
                 Team[Counter] = Convert.ToInt32(reader["Team"]);
                 Counter++;
             }
-            Console.WriteLine(Counter);
             reader.Close();
             connection.Close();
             string[] Teams = new string[] { "💿Орёл", "📀Решка" };
             await client.SendTextMessageAsync(message.Chat.Id, "Вот ваши последние 5 игр:");
             for (int i = 4; i >= 0; i--)
             {
-                Console.WriteLine("PUK" + i);
                 if (UserGameId[i] != 0)
                 {
                     //Timespan в дату
