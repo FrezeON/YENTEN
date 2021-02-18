@@ -29,7 +29,7 @@ namespace YENTEN.Command.Commands.Game
             int maxRowID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = "SELECT min(rowid) FROM CurrentGame";
             int minRowID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            for (int i = minRowID; i <= maxRowID; i++)
+            for (int i = minRowID; i < maxRowID+1; i++)
             {
                 Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE rowid="+i;
                 double Amount = Convert.ToDouble(Sqlcmd.ExecuteScalar());

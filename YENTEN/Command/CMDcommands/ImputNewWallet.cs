@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Data.SQLite;
 using System.IO;
+using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace YENTEN.Command.CMDcommands
 {
@@ -14,10 +16,11 @@ namespace YENTEN.Command.CMDcommands
 
         public override async  void Execute(string comandText)
         {
+            
             Console.WriteLine("Запуск команды InputNewWallet");
             //копируем кошельки из файла
 
-            string RawWallets = await File.ReadAllTextAsync(@"D:\YentLuckyBot\newWallets.txt");
+            string RawWallets = await System.IO.File.ReadAllTextAsync("Data Source=newWallets.txt");
             string[] Wallets = RawWallets.Split(new char[] { ' ' });
             //
 

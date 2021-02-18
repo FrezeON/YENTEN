@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Timers;
+using Telegram.Bot;
+using Telegram.Bot.Types;
 using YENTEN.Command.Commands.Game;
 
 namespace YENTEN.Command.CMDcommands

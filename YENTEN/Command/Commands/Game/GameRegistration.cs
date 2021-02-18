@@ -125,7 +125,8 @@ namespace YENTEN.Command.Commands.Game
                 double AmountYTN=0;
                 try
                 {
-                    AmountYTN = Convert.ToDouble(message.Text);
+                    
+                    AmountYTN = Convert.ToDouble(message.Text.Replace(".",","));
                 }
                 catch (Exception)
                 {

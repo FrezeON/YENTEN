@@ -81,11 +81,12 @@ namespace YENTEN.Command.Commands.Game
             string[] AllArray = new string[(TeamHeadCount + TeamTailsCount)];
             int AllCounter = 0;
             connection.Open();
-            Sqlcmd.CommandText = "SELECT TelegramID FROM CurrentGame";
+            Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame";
             SQLiteDataReader reader2 = Sqlcmd.ExecuteReader();
             while (reader2.Read())
             {
-                AllArray[AllCounter] = reader2["TelegramID"].ToString();
+
+                AllArray[AllCounter] = reader2["TelegramID"].ToString()+"=("+ Convert.ToDouble(reader2["AmountYTN"])+")";
                 AllCounter++;
             }
             reader2.Close();
@@ -99,6 +100,7 @@ namespace YENTEN.Command.Commands.Game
                 double[] UserWinerAmount = new double[TeamHeadCount];
                 int[] UserWinerTelegramID = new int[TeamHeadCount];
                 int counter = 0;
+                //
                 connection.Open();
                 Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=0";
                 SQLiteDataReader reader = Sqlcmd.ExecuteReader();
@@ -110,24 +112,25 @@ namespace YENTEN.Command.Commands.Game
                 }
                 reader.Close();
                 connection.Close();
+                //
                 for (int i = 0; i < TeamHeadCount; i++)
                 {
-                    //Считаем потенциальный выигрыш
+                    //Считаем  выигрыш
                     double UserWinerPercent;
                     UserWinerPercent = (UserWinerAmount[i] * 100) / TeamHeadAmount;
                     UserWinerAmount[i] = UserWinerAmount[i] + TeamTailsAmount * (UserWinerPercent / 100);
                     //
-
                     UniversalLogic(connection, Sqlcmd, UserWinerTelegramID, UserWinerAmount, i);
                     //Записываем победителей
-                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i]);
+                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i]) + "=(" + Convert.ToDouble(UserWinerAmount[i]) + ")"; ;
                     WinnersCounter++;
                     //
                 }
                 string[] Loser = AllArray.Except<string>(WinnersArray).ToArray<string>();
                 string Losers = string.Join(",", Loser);
                 string Winners = string.Join(",", WinnersArray);
-                RecordToHistory(connection, Sqlcmd, Losers, Winners, TeamWinID);
+                string AllPlayers = string.Join(",", AllArray);
+                RecordToHistory(connection, Sqlcmd, Losers, Winners, TeamWinID, AllPlayers);
 
             }
             else
@@ -136,6 +139,8 @@ namespace YENTEN.Command.Commands.Game
                 double[] UserWinerAmount = new double[TeamTailsCount];
                 int[] UserWinerTelegramID = new int[TeamTailsCount];
                 int counter = 0;
+
+                //Запись данных победителей в массивы
                 connection.Open();
                 Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=1";
                 SQLiteDataReader reader = Sqlcmd.ExecuteReader();
@@ -147,6 +152,7 @@ namespace YENTEN.Command.Commands.Game
                 }
                 reader.Close();
                 connection.Close();
+                //
                 for (int i = 0; i < TeamTailsCount; i++)
                 {
                     //Считаем потенциальный выигрыш
@@ -157,25 +163,33 @@ namespace YENTEN.Command.Commands.Game
 
                     UniversalLogic(connection, Sqlcmd, UserWinerTelegramID, UserWinerAmount, i);
                     //Записываем победителей
-                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i]);
+                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i])+"=("+Convert.ToDouble(UserWinerAmount[i])+")";
                     WinnersCounter++;
                     //
                 }
+                //Переделываем массивы в строки
                 string[] Loser = AllArray.Except<string>(WinnersArray).ToArray<string>();
                 string Losers = string.Join(",", Loser);
                 string Winners = string.Join(",", WinnersArray);
-                RecordToHistory(connection, Sqlcmd, Losers, Winners, TeamWinID);
+                string AllPlayers = string.Join(",", AllArray);
+                // Записываем в историю
+                RecordToHistory(connection, Sqlcmd, Losers, Winners, TeamWinID, AllPlayers);
+                //
             }
 
             //Добавляем в лог запись игры и выводим в консоль
-            string appendText = DateTime.Now + "  [Log]: Game № " +
+            connection.Open();
+            Sqlcmd.CommandText = "SELECT max(GameID) FROM GameHistory";
+            int GameID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
+            connection.Close();
+            string appendText = DateTime.Now + "  [Log]: Game № " +GameID+
                 "\nКоличество участников: "+(TeamHeadCount+TeamTailsCount)
                 +"\nКоличество участников команда Ореёл: "+TeamHeadCount+"  Баланс команды: "+TeamHeadAmount
                 + "\nКоличество участников команда Решка: " + TeamTailsCount + "  Баланс команды: " + TeamTailsAmount
                 + "\nОбщая ставка: "+(TeamHeadAmount+TeamTailsAmount)
                 +"\nПобедила команда: "+TeamWinID + Environment.NewLine;
 
-            System.IO.File.AppendAllText(@"D:\YentLuckyBot\log.txt", appendText);
+            System.IO.File.AppendAllText("Data Source=log.txt", appendText);
             Console.WriteLine(appendText);
             //
 
@@ -198,17 +212,18 @@ namespace YENTEN.Command.Commands.Game
         }
 
 
-        private static void RecordToHistory(SQLiteConnection connection, SQLiteCommand Sqlcmd, string Losers, string Winners, int Team)
+        private static void RecordToHistory(SQLiteConnection connection, SQLiteCommand Sqlcmd, string Losers, string Winners, int Team, string AllPlayers)
         {
             Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
 
             connection.Open();
             Sqlcmd.CommandText = "SELECT max(GameID) FROM GameHistory";
             int GameID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "INSERT INTO GameHistory VALUES(@GameID, @Losers, @Winners, @GameDate, @Team)";
+            Sqlcmd.CommandText = "INSERT INTO GameHistory VALUES(@GameID, @Losers, @Winners, @AllPlayers, @GameDate, @Team)";
             Sqlcmd.Parameters.AddWithValue("@GameID", (GameID+1));
             Sqlcmd.Parameters.AddWithValue("@Losers", Losers);
             Sqlcmd.Parameters.AddWithValue("@Winners", Winners);
+            Sqlcmd.Parameters.AddWithValue("@AllPlayers", AllPlayers);
             Sqlcmd.Parameters.AddWithValue("@GameDate", unixTimestamp);
             Sqlcmd.Parameters.AddWithValue("@Team", Team);
             Sqlcmd.ExecuteNonQuery();

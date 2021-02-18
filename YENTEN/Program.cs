@@ -33,6 +33,7 @@ namespace YENTEN
             commands.Add(new BallanceCheck());
             commands.Add(new EnterTheGame());
             commands.Add(new GameRegistration());
+            commands.Add(new GameHistory());
             //Cписок команд заканчивается здесь
 
             //Cписок команд начинается здесь (для консоли)
@@ -46,7 +47,7 @@ namespace YENTEN
             Console.WriteLine(DateTime.Now+ "  [Log]: Bot started");
             for (; ;)
             {
-                OnConsoleHandler();
+                    OnConsoleHandler();
             }
             
 
