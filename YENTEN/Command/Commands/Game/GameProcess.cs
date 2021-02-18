@@ -206,7 +206,6 @@ namespace YENTEN.Command.Commands.Game
             {
                 Console.WriteLine("Пользователь: "+AllArray[i]);
             }
-
             //
         }
 
