@@ -7,6 +7,7 @@ using System.Data.SQLite;
 using System.Net;
 using System.IO;
 using System.Text.RegularExpressions;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace YENTEN.Command.Commands
 {
@@ -103,6 +104,23 @@ namespace YENTEN.Command.Commands
 
             //
 
+            //Клавиатура для профиля
+            var markup = new ReplyKeyboardMarkup();
+            markup.Keyboard = new KeyboardButton[][]
+            {
+                new []
+                {
+                new KeyboardButton("📅История"),
+                new KeyboardButton("💸Баланс")
+                },
+                new[]
+                {
+                    new KeyboardButton("Меню"),
+                }
+            };
+            markup.OneTimeKeyboard = true;
+            await client.SendTextMessageAsync(message.Chat.Id, "Куда дальше?", replyMarkup: markup);
+            //
 
         }
 

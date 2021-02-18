@@ -41,8 +41,24 @@ namespace YENTEN.Command.Commands.Game
                 connection.Open();
                 Sqlcmd.CommandText ="DELETE FROM CurrentGame";
                 Sqlcmd.ExecuteNonQuery();
+                Sqlcmd.CommandText = "INSERT INTO CurrentGame VALUES(@TelegramID, @AmountYTN,@Team)";
+                Sqlcmd.Parameters.AddWithValue("@TelegramID", 0);
+                Sqlcmd.Parameters.AddWithValue("@AmountYTN", 0);
+                Sqlcmd.Parameters.AddWithValue("@Team", 0);
+                Sqlcmd.ExecuteNonQuery();
                 connection.Close();
             }
+            else
+            {
+                connection.Open();
+                Sqlcmd.CommandText = "INSERT INTO CurrentGame VALUES(@TelegramID, @AmountYTN,@Team)";
+                Sqlcmd.Parameters.AddWithValue("@TelegramID", 0);
+                Sqlcmd.Parameters.AddWithValue("@AmountYTN", 0);
+                Sqlcmd.Parameters.AddWithValue("@Team", 0);
+                Sqlcmd.ExecuteNonQuery();
+                connection.Close();
+            }
+            
         }
 
         private static void GameLogic(SQLiteConnection connection, SQLiteCommand Sqlcmd, int TeamHeadCount, int TeamTailsCount)

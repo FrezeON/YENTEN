@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace YENTEN.Command.Commands
 {
@@ -23,6 +24,22 @@ namespace YENTEN.Command.Commands
 + "\nВесь процесс игры и пополнение работает без участия оператора.\nОднако для вывода выигранных средств необходимо подать заявку через специальную форму."
 
 + "\n\nДля начала игры нажмите кнопку 'Регистрация'");
+
+            var markup = new ReplyKeyboardMarkup();
+            markup.Keyboard = new KeyboardButton[][]
+            {
+                new[]
+                {
+                new KeyboardButton("🎮Игра"),
+                },
+                new[]
+                {
+                   new KeyboardButton("❓Информация"),
+                   new KeyboardButton("👤Профиль")
+                }
+            };
+            markup.OneTimeKeyboard = true;
+            await client.SendTextMessageAsync(message.Chat.Id, "Куда дальше?", replyMarkup: markup);
         }
     }
 }

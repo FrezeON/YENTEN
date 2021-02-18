@@ -20,10 +20,14 @@ namespace YENTEN.Command.Commands
             var markup = new ReplyKeyboardMarkup();
             markup.Keyboard = new KeyboardButton[][]
             {
-                new KeyboardButton[]
+                new []
                 {
-                new KeyboardButton("Меню"),
+                new KeyboardButton("📅История"),
                 new KeyboardButton("💸Баланс")
+                },
+                new[]
+                {
+                    new KeyboardButton("Меню"),
                 }
             };
             markup.OneTimeKeyboard = true;
