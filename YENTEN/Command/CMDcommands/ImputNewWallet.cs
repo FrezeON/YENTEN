@@ -21,6 +21,8 @@ namespace YENTEN.Command.CMDcommands
             //копируем кошельки из файла
 
             string RawWallets = await System.IO.File.ReadAllTextAsync("newWallets.txt");
+            RawWallets = RawWallets.Replace("\"\",\"", "");
+            RawWallets = RawWallets.Replace("\"", " ");
             string[] Wallets = RawWallets.Split(new char[] { ' ' });
             //
 
@@ -34,7 +36,8 @@ namespace YENTEN.Command.CMDcommands
                     Sqlcmd.Parameters.AddWithValue("@Wallet", Wallets[i]);
                     Sqlcmd.ExecuteNonQuery();
                   }
-
+            Sqlcmd.CommandText = "DELETE FROM RawWallets WHERE ROWID=(SELECT min(ROWID) FROM RawWallets)";
+            Sqlcmd.ExecuteNonQuery();
             Console.WriteLine("Add  " + (Wallets.Length)+"  Wallets");              
             connection.Close();
 

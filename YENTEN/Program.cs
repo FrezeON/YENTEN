@@ -41,6 +41,7 @@ namespace YENTEN
             commandsCMD = new List<Command.CMDcommand>();
             commandsCMD.Add(new ImputNewWallet());
             commandsCMD.Add(new StartAndStopGame());
+            commandsCMD.Add(new SendNotif());
             // Cписок команд заканчивается здесь(для консоли)
             SetTimer();
             client.StartReceiving();
@@ -94,7 +95,7 @@ namespace YENTEN
             }
            if (message.ReplyToMessage != null && message.ReplyToMessage.Text == "Подтверждаю")
             {
-                WithdrawFunds.WithdrawFundsApprowed(message, client, connection);
+                WithdrawFunds.WithdrawFundsApprowed(message, client);
             }
         }
 

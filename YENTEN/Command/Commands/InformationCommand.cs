@@ -25,21 +25,7 @@ namespace YENTEN.Command.Commands
 
 + "\n\nДля начала игры нажмите кнопку 'Регистрация'");
 
-            var markup = new ReplyKeyboardMarkup();
-            markup.Keyboard = new KeyboardButton[][]
-            {
-                new[]
-                {
-                new KeyboardButton("🎮Игра"),
-                },
-                new[]
-                {
-                   new KeyboardButton("❓Информация"),
-                   new KeyboardButton("👤Профиль")
-                }
-            };
-            markup.OneTimeKeyboard = true;
-            await client.SendTextMessageAsync(message.Chat.Id, "Куда дальше?", replyMarkup: markup);
+
         }
     }
 }

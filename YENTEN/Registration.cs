@@ -5,6 +5,7 @@ using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 using YENTEN.Command.Commands;
 using YENTEN.Inline;
 
@@ -25,7 +26,17 @@ namespace YENTEN
             if (WalletIN == "")
             {
                 await client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
-                await client.SendTextMessageAsync(message.Chat.Id, "К сожаление в базе нет свободных адресов для регистрации.\nОбратитесь за помощью к Оператору @UtkaZapas");
+                await client.SendTextMessageAsync(message.Chat.Id, "К сожалению в базе нет свободных адресов для регистрации.\nОбратитесь за помощью к Оператору @UtkaZapas");
+                var markup = new ReplyKeyboardMarkup();
+                markup.Keyboard = new KeyboardButton[][]
+                {
+                new KeyboardButton[]
+                {
+                new KeyboardButton("🔑Регистрация")
+                }
+                };
+                markup.OneTimeKeyboard = true;
+                await client.SendTextMessageAsync(message.Chat.Id, "Для начала нажмите кнопку 🔑Регистрация", replyMarkup: markup);
             }
             else
             {
@@ -51,6 +62,10 @@ namespace YENTEN
                 MainMenu.SendMAinMenu(client, message);
                 Console.WriteLine(DateTime.Now + "  [Log]: "); Console.ForegroundColor = ConsoleColor.Green; Console.Write("НОВЫЙ ПОЛЬЗОВАТЕЛЬ!");
                 Console.ForegroundColor = ConsoleColor.White; Console.WriteLine("\nID: " + message.Chat.Id + "\nWallet: " + UserWallet + "\nWalletIN: " + WalletIN);
+                System.IO.File.AppendAllText("log.txt", DateTime.Now + "  [Log]: НОВЫЙ ПОЛЬЗОВАТЕЛЬ!" +
+                    "\nID: " + message.Chat.Id + 
+                    "\nWallet: " + UserWallet + 
+                    "\nWalletIN: " + WalletIN);
             }
               
         }

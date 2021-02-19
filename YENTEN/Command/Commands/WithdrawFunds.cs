@@ -11,11 +11,11 @@ namespace YENTEN.Command.Commands
 {
     class WithdrawFunds : Command
     {
-        private SQLiteConnection connection;
         public override string[] Names { get; set; } = new string[] { "Вывод", "Снять с баланса" };
 
         public override async void Execute(Message message, TelegramBotClient client)
         {
+            SQLiteConnection connection;
             connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
 
@@ -28,7 +28,7 @@ namespace YENTEN.Command.Commands
             double Ballance = Convert.ToDouble(Sqlcmd.ExecuteScalar());
             connection.Close();
 
-            await client.SendTextMessageAsync(message.Chat.Id, "Ваш баланс: " + Ballance
+            await client.SendTextMessageAsync(message.Chat.Id, "Ваш баланс: " + Ballance+"YTN"
                 + "\nЕсли вы хотите вывести ваши средства на кошелек:" +
                 "\n" + UserWallet +
                 "\nОтветьте на седующее сообщение с суммой которую вы хотите вывести в формате" +
@@ -40,16 +40,17 @@ namespace YENTEN.Command.Commands
             await client.SendTextMessageAsync(message.Chat.Id, "Подтверждаю", ParseMode.Default, false, false, 0, replyMarkup: new ForceReplyMarkup { Selective = true });
         }
 
-        public static async void WithdrawFundsApprowed(Message message, TelegramBotClient client, SQLiteConnection connection)
+        public static async void WithdrawFundsApprowed(Message message, TelegramBotClient client)
         {
+            SQLiteConnection connection;
 
-          //  try
-          //  {
+
+            try
+            {
                 connection = new SQLiteConnection("Data Source=MainDB1.db");
-
+                SQLiteCommand Sqlcmd = connection.CreateCommand();
                 string UserMessage = message.Text.Replace(".", ",");
                 double AmountWinthdraw = Convert.ToDouble(UserMessage);
-                SQLiteCommand Sqlcmd = connection.CreateCommand();
                 connection.Open();
                 Sqlcmd.CommandText = "SELECT WalletIN FROM UserInfo WHERE TelegramID=" + message.Chat.Id;
                 string WalletIn = Convert.ToString(Sqlcmd.ExecuteScalar());
@@ -57,9 +58,12 @@ namespace YENTEN.Command.Commands
                 string UserWallet = Convert.ToString(Sqlcmd.ExecuteScalar());
                 Sqlcmd.CommandText = "SELECT Ballance FROM BallanceCheck WHERE WalletIN=" + "'" + WalletIn + "'";
                 double Ballance = Convert.ToDouble(Sqlcmd.ExecuteScalar());
+                connection.Close();
+
                 if (AmountWinthdraw <= Ballance && AmountWinthdraw > 30)
                 {
-                    double AmountWinthdrawMinusСommission = AmountWinthdraw*95/100;
+                    connection.Open();
+                    double AmountWinthdrawMinusСommission = AmountWinthdraw * 95 / 100;
                     double Сommission = AmountWinthdraw - AmountWinthdrawMinusСommission;
                     //Создаем заявку
                     Sqlcmd.CommandText = "INSERT INTO WithdrawFunds VALUES(@TelegramID, @UserWallet, @AmountWinthdraw, @Сommission)";
@@ -76,7 +80,7 @@ namespace YENTEN.Command.Commands
                     connection.Close();
 
                     await client.SendTextMessageAsync(message.Chat.Id, "✅Ваша заявка на вывод средств в размере:\n" + AmountWinthdraw + "YTN"
-                        +"\nС вычетом комисии вы получите ~"+ AmountWinthdrawMinusСommission
+                        + "\nС вычетом комисии вы получите ~" + AmountWinthdrawMinusСommission+"YTN"
                         + "\nПодтвержденна!"
                         + "\nЗаявки на вывод средств рассматриваются в ручном режиме");
                 }
@@ -84,15 +88,16 @@ namespace YENTEN.Command.Commands
                 {
                     await client.SendTextMessageAsync(message.Chat.Id, "❌На вашем балансе недостаточно средств или сумма меньше минимально допустимой!\nПовторите заявку с правильной суммой");
                 }
-          //  }
-            
-          //  catch (Exception)
-          //  {
-            //    await client.SendTextMessageAsync(message.Chat.Id, "❌При создании заявки произошла ошибка" +
-            //        "\nПопробуйте создать заявку снова либо обратитесь к оператору");
-            //    System.IO.File.AppendAllText("log.txt", DateTime.Now + "[Log]: ОШИБКА СОЗДАНИЯ ЗАЯВКИ! TelegramID=" + message.Chat.Id + " Пользователь написал: " + message.Text);
-            //    Console.ForegroundColor = ConsoleColor.Red; Console.WriteLine(DateTime.Now + "[Log]: ОШИБКА СОЗДАНИЯ ЗАЯВКИ! TelegramID=" + message.Chat.Id + " Пользователь написал: " + message.Text); Console.ForegroundColor = ConsoleColor.White;
-           // }
+
+            }
+
+            catch (Exception)
+            {
+                await client.SendTextMessageAsync(message.Chat.Id, "❌При создании заявки произошла ошибка" +
+                    "\nПопробуйте создать заявку снова либо обратитесь к оператору");
+               System.IO.File.AppendAllText("log.txt", "\n"+DateTime.Now + "[Log]: ОШИБКА СОЗДАНИЯ ЗАЯВКИ! TelegramID=" + message.Chat.Id + " Пользователь написал: " + message.Text);
+               Console.ForegroundColor = ConsoleColor.Red; Console.WriteLine(DateTime.Now + "[Log]: ОШИБКА СОЗДАНИЯ ЗАЯВКИ! TelegramID=" + message.Chat.Id + " Пользователь написал: " + message.Text); Console.ForegroundColor = ConsoleColor.White;
+            }
             //Клавиатура для профиля
             var markup = new ReplyKeyboardMarkup();
             markup.Keyboard = new KeyboardButton[][]
