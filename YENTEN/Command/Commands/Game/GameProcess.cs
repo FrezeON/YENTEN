@@ -92,23 +92,7 @@ namespace YENTEN.Command.Commands.Game
                 }
             }
             connection.Close();
-            //
-            //Записываем всех пользователей
-            string[] AllArray = new string[(TeamHeadCount + TeamTailsCount)];
-            int AllCounter = 0;
-            connection.Open();
-            Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame";
-            SQLiteDataReader reader2 = Sqlcmd.ExecuteReader();
-            while (reader2.Read())
-            {
-
-                AllArray[AllCounter] = reader2["TelegramID"].ToString()+"=("+ Convert.ToDouble(reader2["AmountYTN"])+")";
-                AllCounter++;
-            }
-            reader2.Close();
-            connection.Close();
-            //
-
+            int LoserCounter = 0;
             int WinnersCounter = 0;
             if (TeamWinID == 0)
             {
@@ -141,9 +125,37 @@ namespace YENTEN.Command.Commands.Game
                     WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i]) + "=(" + Convert.ToDouble(UserWinerAmount[i]) + ")"; ;
                     WinnersCounter++;
                     //
+
                 }
-                string[] Loser = AllArray.Except<string>(WinnersArray).ToArray<string>();
-                string Losers = string.Join(",", Loser);
+                //Запись данных проигравших в массивы
+                string[] LosersArray = new string[TeamHeadCount];
+                double[] UserLoserAmount = new double[TeamHeadCount];
+                int[] UserLoserTelegramID = new int[TeamHeadCount];
+                counter = 0;
+                connection.Open();
+                Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=1";
+                SQLiteDataReader reader2 = Sqlcmd.ExecuteReader();
+                while (reader2.Read())
+                {
+                    UserLoserTelegramID[counter] = Convert.ToInt32(reader2["TelegramID"]);
+                    UserLoserAmount[counter] = Convert.ToDouble(reader2["AmountYTN"]);
+                    counter++;
+                }
+                reader2.Close();
+                connection.Close();
+                //
+                for (int i = 0; i < TeamTailsCount; i++)
+                {
+                    //Записываем проигравших
+                    LosersArray[LoserCounter] = Convert.ToString(UserLoserTelegramID[i]) + "=(" + Convert.ToDouble(UserLoserAmount[i]) + ")";
+                    LoserCounter++;
+                    //
+                }
+                //Переделываем массивы в строки
+                string[] AllArray = new string[(LosersArray.Length + WinnersArray.Length)];
+                LosersArray.CopyTo(AllArray, 0);
+                WinnersArray.CopyTo(AllArray, LosersArray.Length);
+                string Losers = string.Join(",", LosersArray);
                 string Winners = string.Join(",", WinnersArray);
                 string AllPlayers = string.Join(",", AllArray);
                 RecordToHistory(connection, Sqlcmd, Losers, Winners, TeamWinID, AllPlayers);
@@ -159,14 +171,14 @@ namespace YENTEN.Command.Commands.Game
                 //Запись данных победителей в массивы
                 connection.Open();
                 Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=1";
-                SQLiteDataReader reader = Sqlcmd.ExecuteReader();
-                while (reader.Read())
+                SQLiteDataReader reader4 = Sqlcmd.ExecuteReader();
+                while (reader4.Read())
                 {
-                    UserWinerTelegramID[counter] = Convert.ToInt32(reader["TelegramID"]);
-                    UserWinerAmount[counter] = Convert.ToDouble(reader["AmountYTN"]);
+                    UserWinerTelegramID[counter] = Convert.ToInt32(reader4["TelegramID"]);
+                    UserWinerAmount[counter] = Convert.ToDouble(reader4["AmountYTN"]);
                     counter++;
                 }
-                reader.Close();
+                reader4.Close();
                 connection.Close();
                 //
                 for (int i = 0; i < TeamTailsCount; i++)
@@ -183,13 +195,39 @@ namespace YENTEN.Command.Commands.Game
                     WinnersCounter++;
                     //
                 }
+                //Запись данных проигравших в массивы
+                string[] LosersArray = new string[TeamHeadCount];
+                double[] UserLoserAmount = new double[TeamHeadCount];
+                int[] UserLoserTelegramID = new int[TeamHeadCount];
+                counter = 0;
+                connection.Open();
+                Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=0";
+                SQLiteDataReader reader3 = Sqlcmd.ExecuteReader();
+                while (reader3.Read())
+                {
+                    UserLoserTelegramID[counter] = Convert.ToInt32(reader3["TelegramID"]);
+                    UserLoserAmount[counter] = Convert.ToDouble(reader3["AmountYTN"]);
+                    counter++;
+                }
+                reader3.Close();
+                connection.Close();
+                //
+                for (int i = 0; i < TeamHeadCount; i++)
+                {
+                    //Записываем проигравших
+                    LosersArray[LoserCounter] = Convert.ToString(UserLoserTelegramID[i]) + "=(" + Convert.ToDouble(UserLoserAmount[i]) + ")";
+                    LoserCounter++;
+                    //
+                }
                 //Переделываем массивы в строки
-                string[] Loser = AllArray.Except<string>(WinnersArray).ToArray<string>();
-                string Losers = string.Join(",", Loser);
+                string[] AllArray = new string[(LosersArray.Length + WinnersArray.Length)];
+                LosersArray.CopyTo(AllArray, 0);
+                WinnersArray.CopyTo(AllArray, LosersArray.Length);
+                string Losers = string.Join(",", LosersArray);
                 string Winners = string.Join(",", WinnersArray);
                 string AllPlayers = string.Join(",", AllArray);
                 // Записываем в историю
-                RecordToHistory(connection, Sqlcmd, Losers, Winners, TeamWinID, AllPlayers);
+                RecordToHistory(connection, Sqlcmd, Losers, Winners, TeamWinID, AllPlayers) ;
                 //
             }
 
@@ -235,7 +273,7 @@ namespace YENTEN.Command.Commands.Game
             connection.Open();
             Sqlcmd.CommandText = "SELECT max(GameID) FROM GameHistory";
             int GameID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "INSERT INTO GameHistory VALUES(@GameID, @Losers, @Winners, @AllPlayers, @GameDate, @Team, @NotificationStatus)";
+            Sqlcmd.CommandText = "INSERT INTO GameHistory VALUES(@GameID, @Losers, @AllPlayers, @Winners, @GameDate, @Team, @NotificationStatus)"; 
             Sqlcmd.Parameters.AddWithValue("@GameID", (GameID+1));
             Sqlcmd.Parameters.AddWithValue("@Losers", Losers);
             Sqlcmd.Parameters.AddWithValue("@Winners", Winners);

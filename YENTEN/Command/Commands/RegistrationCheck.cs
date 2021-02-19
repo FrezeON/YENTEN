@@ -30,7 +30,7 @@ namespace YENTEN.Command.Commands
            }
             else
             {
-                await client.SendTextMessageAsync(message.Chat.Id, "Вставсте адресс вашего колька." +
+                await client.SendTextMessageAsync(message.Chat.Id, "Вставсте адресс вашего кошелька." +
                     "\nAдрес кошелька должен быть похож на это: YnNhhuHjnqpk86fdiXd3SXo5DXozEE4Wxv"
                     +"\nВ случае неправильного ввода авдресса необходимо обратится к оператору @UtkaZapas", ParseMode.Default, false, false, 0, replyMarkup: new ForceReplyMarkup { Selective = true });
             }

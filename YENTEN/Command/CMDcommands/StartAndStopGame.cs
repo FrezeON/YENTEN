@@ -28,7 +28,7 @@ namespace YENTEN.Command.CMDcommands
         }
         public static void SetTimer()
         {
-            aTimer = new System.Timers.Timer(10000);
+            aTimer = new System.Timers.Timer(300000);
 
             aTimer.Elapsed += GameProcess.Run;
             aTimer.AutoReset = true;

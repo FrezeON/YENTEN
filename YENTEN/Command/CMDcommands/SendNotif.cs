@@ -7,19 +7,19 @@ namespace YENTEN.Command.CMDcommands
 {
     class SendNotif : CMDcommand
     {
-        public override string[] Names { get; set; } = new string[] { "Send: "};
+        public override string[] Names { get; set; } = new string[] { "Send:"};
         private static TelegramBotClient client;
         private static SQLiteConnection connection;
         public override async void Execute(string comandText)
         {
             client = new TelegramBotClient(Config.Token);
             connection = new SQLiteConnection("Data Source=MainDB1.db");
-            if (comandText== "Send: ")
+            if (comandText== "Send:")
             {
-                comandText = comandText.Replace("Send: ", "");
+                string Text = Console.ReadLine();
                 SQLiteCommand Sqlcmd = connection.CreateCommand();
                 connection.Open();
-                Sqlcmd.CommandText = "SELECT count(*) FROM UserInfo";
+                Sqlcmd.CommandText = "SELECT count(TelegramID) FROM UserInfo";
                 int UserCount = Convert.ToInt32(Sqlcmd.ExecuteScalar());
                 Sqlcmd.CommandText = "SELECT TelegramID FROM UserInfo";
                 SQLiteDataReader reader = Sqlcmd.ExecuteReader();
@@ -27,16 +27,12 @@ namespace YENTEN.Command.CMDcommands
                 int Counter = 0;
                 while (reader.Read())
                 {
-                    UserID[Counter] = Convert.ToInt32(reader["GameID"]);
+                    UserID[Counter] = Convert.ToInt32(reader["TelegramID"]);
+                    await client.SendTextMessageAsync(UserID[Counter], Text);
                     Counter++;
                 }
                 reader.Close();
                 connection.Close();
-
-                for(int i=0; i < UserCount; i++)
-                {
-                    await client.SendTextMessageAsync(UserID[i], comandText);
-                }
             }
         }
     }

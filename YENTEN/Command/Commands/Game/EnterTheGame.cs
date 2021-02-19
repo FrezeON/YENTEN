@@ -92,11 +92,11 @@ namespace YENTEN.Command.Commands.Game
                 new[]
                 {
                     new KeyboardButton("❓Информация"),
-                    new KeyboardButton("Меню"),
                     new KeyboardButton("👤Профиль")
                 }
             };
             markup.OneTimeKeyboard = true;
+            await client.SendTextMessageAsync(message.Chat.Id, "Куда дальше?", replyMarkup: markup);
             //
             //Берем данные пользователя
             connection.Open();

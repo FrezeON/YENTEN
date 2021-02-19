@@ -146,7 +146,7 @@ namespace YENTEN.Command.Commands.Game
                     Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Single).Value = AmountOnBalance-AmountYTN;
                     Sqlcmd.ExecuteNonQuery();
                     connection.Close();
-                    await client.SendTextMessageAsync(message.Chat.Id, "Что дальше?", replyMarkup: Main);
+                    await client.SendTextMessageAsync(message.Chat.Id, "Ваша ставка принята, нажмите кнопку 🎮Игра для большей информации", replyMarkup: Main);
                 }
                 else
                 {
