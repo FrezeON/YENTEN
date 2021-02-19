@@ -81,7 +81,8 @@ namespace YENTEN.Command.Commands
                 new []
                 {
                 new KeyboardButton("📅История"),
-                new KeyboardButton("💸Баланс")
+                new KeyboardButton("💸Баланс"),
+                new KeyboardButton("📤Вывод с баланса"),
                 },
                 new[]
                 {

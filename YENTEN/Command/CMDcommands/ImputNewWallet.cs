@@ -20,7 +20,7 @@ namespace YENTEN.Command.CMDcommands
             Console.WriteLine("Запуск команды InputNewWallet");
             //копируем кошельки из файла
 
-            string RawWallets = await System.IO.File.ReadAllTextAsync("Data Source=newWallets.txt");
+            string RawWallets = await System.IO.File.ReadAllTextAsync("newWallets.txt");
             string[] Wallets = RawWallets.Split(new char[] { ' ' });
             //
 

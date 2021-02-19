@@ -205,7 +205,7 @@ namespace YENTEN.Command.Commands.Game
                 + "\nОбщая ставка: "+(TeamHeadAmount+TeamTailsAmount)
                 +"\nПобедила команда: "+TeamWinID + Environment.NewLine;
 
-            System.IO.File.AppendAllText("Data Source=log.txt", appendText);
+            System.IO.File.AppendAllText("log.txt", appendText);
             Console.WriteLine(appendText);
             //
 

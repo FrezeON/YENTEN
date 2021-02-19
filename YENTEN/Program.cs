@@ -34,6 +34,7 @@ namespace YENTEN
             commands.Add(new EnterTheGame());
             commands.Add(new GameRegistration());
             commands.Add(new GameHistory());
+            commands.Add(new WithdrawFunds());
             //Cписок команд заканчивается здесь
 
             //Cписок команд начинается здесь (для консоли)
@@ -81,13 +82,19 @@ namespace YENTEN
                   
                 }
             }
-           if (message.ReplyToMessage != null && message.ReplyToMessage.Text == "Вставсте адресс вашего колька.\nAдрес кошелька должен быть похож на это: YnNhhuHjnqpk86fdiXd3SXo5DXozEE4Wxv")
+           if (message.ReplyToMessage != null && message.ReplyToMessage.Text == "Вставсте адресс вашего колька." +
+                    "\nAдрес кошелька должен быть похож на это: YnNhhuHjnqpk86fdiXd3SXo5DXozEE4Wxv"
+                    + "\nВ случае неправильного ввода авдресса необходимо обратится к оператору @UtkaZapas")
            {
                 Registration.StrartReg(message, client);
            }
            if (message.ReplyToMessage != null && message.ReplyToMessage.Text =="Введите Вашу ставку в формате 14 или (14.531)")
             {
                 GameRegistration.UserReg(message, client, connection);
+            }
+           if (message.ReplyToMessage != null && message.ReplyToMessage.Text == "Подтверждаю")
+            {
+                WithdrawFunds.WithdrawFundsApprowed(message, client, connection);
             }
         }
 

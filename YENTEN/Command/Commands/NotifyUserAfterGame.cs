@@ -52,7 +52,7 @@ namespace YENTEN.Command.Commands
                         }
                         catch(Exception)
                         {
-                            System.IO.File.AppendAllText("Data Source=log.txt", DateTime.Now + "  [Log]: Не получилось отправить уведомление. Номер игры="+MaxGameID+"  ChatID="+matchAmount);
+                            System.IO.File.AppendAllText("log.txt", DateTime.Now + "  [Log]: Не получилось отправить уведомление. Номер игры="+MaxGameID+"  ChatID="+ matchAmount.Groups[1].Value);
                             Console.WriteLine(DateTime.Now + "  [Log]: Не получилось отправить уведомление. Номер игры=" + MaxGameID + "  ChatID=" + matchAmount);
                         }
 
