@@ -18,7 +18,7 @@ namespace YENTEN.Command.Commands
        
         public override async void Execute(Message message, TelegramBotClient client)
         {
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             connection.Open();
            SQLiteCommand Sqlcmd = connection.CreateCommand();
            Sqlcmd.CommandText = "SELECT count(*) FROM UserInfo WHERE TelegramID=" + message.Chat.Id;
@@ -30,7 +30,9 @@ namespace YENTEN.Command.Commands
            }
             else
             {
-                await client.SendTextMessageAsync(message.Chat.Id, "Вставсте адресс вашего колька.\nAдрес кошелька должен быть похож на это: YnNhhuHjnqpk86fdiXd3SXo5DXozEE4Wxv", ParseMode.Default, false, false, 0, replyMarkup: new ForceReplyMarkup { Selective = true });
+                await client.SendTextMessageAsync(message.Chat.Id, "Вставсте адресс вашего кошелька." +
+                    "\nAдрес кошелька должен быть похож на это: YnNhhuHjnqpk86fdiXd3SXo5DXozEE4Wxv"
+                    +"\nВ случае неправильного ввода авдресса необходимо обратится к оператору @UtkaZapas", ParseMode.Default, false, false, 0, replyMarkup: new ForceReplyMarkup { Selective = true });
             }
             
         }

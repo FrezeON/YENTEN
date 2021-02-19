@@ -14,12 +14,11 @@ namespace YENTEN
 {
     class Program
     {
-       
+        private static Timer aTimer;
         private static TelegramBotClient client;
         private static List<Command.Command> commands;
         private static List<Command.CMDcommand> commandsCMD;
         private static SQLiteConnection connection;
-        private static Timer aTimer;
 
         static void Main(string[] args)
         {
@@ -34,25 +33,28 @@ namespace YENTEN
             commands.Add(new BallanceCheck());
             commands.Add(new EnterTheGame());
             commands.Add(new GameRegistration());
+            commands.Add(new GameHistory());
+            commands.Add(new WithdrawFunds());
             //Cписок команд заканчивается здесь
 
             //Cписок команд начинается здесь (для консоли)
             commandsCMD = new List<Command.CMDcommand>();
             commandsCMD.Add(new ImputNewWallet());
             commandsCMD.Add(new StartAndStopGame());
+            commandsCMD.Add(new SendNotif());
             // Cписок команд заканчивается здесь(для консоли)
-            
+            SetTimer();
             client.StartReceiving();
             client.OnMessage += OnMessageHandler;
             Console.WriteLine(DateTime.Now+ "  [Log]: Bot started");
             for (; ;)
             {
-                OnConsoleHandler();
+                    OnConsoleHandler();
             }
             
 
         }
-        private static async void OnConsoleHandler()
+        private static void OnConsoleHandler()
         {
             string commandText = Console.ReadLine();
             if (commandText != null)
@@ -66,7 +68,7 @@ namespace YENTEN
                 }
             }
         }
-        private static async void OnMessageHandler(object sender, MessageEventArgs e)
+        private static void OnMessageHandler(object sender, MessageEventArgs e)
         {
             var message = e.Message;
             
@@ -81,7 +83,9 @@ namespace YENTEN
                   
                 }
             }
-           if (message.ReplyToMessage != null && message.ReplyToMessage.Text == "Вставсте адресс вашего колька.\nAдрес кошелька должен быть похож на это: YnNhhuHjnqpk86fdiXd3SXo5DXozEE4Wxv")
+           if (message.ReplyToMessage != null && message.ReplyToMessage.Text == "Вставсте адресс вашего колька." +
+                    "\nAдрес кошелька должен быть похож на это: YnNhhuHjnqpk86fdiXd3SXo5DXozEE4Wxv"
+                    + "\nВ случае неправильного ввода авдресса необходимо обратится к оператору @UtkaZapas")
            {
                 Registration.StrartReg(message, client);
            }
@@ -89,8 +93,19 @@ namespace YENTEN
             {
                 GameRegistration.UserReg(message, client, connection);
             }
+           if (message.ReplyToMessage != null && message.ReplyToMessage.Text == "Подтверждаю")
+            {
+                WithdrawFunds.WithdrawFundsApprowed(message, client);
+            }
         }
 
+        public static void SetTimer()
+        {
+            aTimer = new System.Timers.Timer(10000);
 
+            aTimer.Elapsed += NotifyUserAfterGame.SenNotification;
+            aTimer.AutoReset = true;
+            aTimer.Enabled = true;
+        }
     }
 }

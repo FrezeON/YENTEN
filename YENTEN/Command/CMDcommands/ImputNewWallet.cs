@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Data.SQLite;
 using System.IO;
+using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace YENTEN.Command.CMDcommands
 {
@@ -14,15 +16,18 @@ namespace YENTEN.Command.CMDcommands
 
         public override async  void Execute(string comandText)
         {
+            
             Console.WriteLine("Запуск команды InputNewWallet");
             //копируем кошельки из файла
 
-            string RawWallets = await File.ReadAllTextAsync(@"D:\YentLuckyBot\newWallets.txt");
+            string RawWallets = await System.IO.File.ReadAllTextAsync("newWallets.txt");
+            RawWallets = RawWallets.Replace("\"\",\"", "");
+            RawWallets = RawWallets.Replace("\"", " ");
             string[] Wallets = RawWallets.Split(new char[] { ' ' });
             //
 
             //Вносим кошельки в конец базы
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             connection.Open();
             SQLiteCommand Sqlcmd = connection.CreateCommand();
                   for (int i=0; i< Wallets.Length; i++)
@@ -31,7 +36,8 @@ namespace YENTEN.Command.CMDcommands
                     Sqlcmd.Parameters.AddWithValue("@Wallet", Wallets[i]);
                     Sqlcmd.ExecuteNonQuery();
                   }
-
+            Sqlcmd.CommandText = "DELETE FROM RawWallets WHERE ROWID=(SELECT min(ROWID) FROM RawWallets)";
+            Sqlcmd.ExecuteNonQuery();
             Console.WriteLine("Add  " + (Wallets.Length)+"  Wallets");              
             connection.Close();
 

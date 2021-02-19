@@ -18,7 +18,7 @@ namespace YENTEN.Command.Commands.Game
         public override async void Execute(Message message, TelegramBotClient client)
         {
             //Head(0) - орёл Tails(1)- Решка
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
 
             //Поиск пользователя в игре
@@ -27,7 +27,6 @@ namespace YENTEN.Command.Commands.Game
             int UserExist = Convert.ToInt32(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
             double AmountInCurrentGame = Convert.ToDouble(Sqlcmd.ExecuteScalar());
-            Console.WriteLine(AmountInCurrentGame);
             connection.Close();
 
             //Получаем ID команды
@@ -107,7 +106,7 @@ namespace YENTEN.Command.Commands.Game
 
             //
             //Поиск пользователя в игре
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             connection.Open();
             Sqlcmd.CommandText = "SELECT COUNT(*) FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
@@ -125,7 +124,8 @@ namespace YENTEN.Command.Commands.Game
                 double AmountYTN=0;
                 try
                 {
-                    AmountYTN = Convert.ToDouble(message.Text);
+                    
+                    AmountYTN = Convert.ToDouble(message.Text.Replace(".",","));
                 }
                 catch (Exception)
                 {
@@ -146,7 +146,7 @@ namespace YENTEN.Command.Commands.Game
                     Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Single).Value = AmountOnBalance-AmountYTN;
                     Sqlcmd.ExecuteNonQuery();
                     connection.Close();
-                    await client.SendTextMessageAsync(message.Chat.Id, "Что дальше?", replyMarkup: Main);
+                    await client.SendTextMessageAsync(message.Chat.Id, "Ваша ставка принята, нажмите кнопку 🎮Игра для большей информации", replyMarkup: Main);
                 }
                 else
                 {

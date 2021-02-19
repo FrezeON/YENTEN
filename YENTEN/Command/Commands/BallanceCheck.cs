@@ -7,6 +7,7 @@ using System.Data.SQLite;
 using System.Net;
 using System.IO;
 using System.Text.RegularExpressions;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace YENTEN.Command.Commands
 {
@@ -19,7 +20,7 @@ namespace YENTEN.Command.Commands
         {
             
             //БД1
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             connection.Open();
             Sqlcmd.CommandText = "SELECT rowid FROM UserInfo WHERE TelegramID = " + message.Chat.Id;
@@ -36,74 +37,110 @@ namespace YENTEN.Command.Commands
             int LastIN = Convert.ToInt32(Sqlcmd.ExecuteScalar());
             connection.Close();
             //
-            //Парсер
-            string urlAddress = "http://ytn.ccore.online/ext/getaddress/"+WalletIn;
-            string HTML = getResponse(urlAddress);
-            //
-            //Переворот HTML
-            HTML = ReverseString(HTML);
-            //Console.WriteLine(HTML);
-            //
-            Console.WriteLine(DateTime.Now + "  [Log]: Пользователь запросил обновление кошелька: "+WalletIn);
-
-            double balanceUpdate =ballance;
-            int counter = 0;
-            while (true)
+            try
             {
-                //Условия регуляров
-                Match matchTime = Regex.Match(HTML, "}([01234567890]*?):\"pmatsemit");
-                Match matchAmount = Regex.Match(HTML, "\",([-01234567890.]*?):\\\"tnuoma");
-                string timestamp = ReverseString(matchTime.Groups[1].Value);
-                string Amount = ReverseString(matchAmount.Groups[1].Value);
+
+
+                //Парсер
+                string urlAddress = "http://ytn.ccore.online/ext/getaddress/" + WalletIn;
+                string HTML = getResponse(urlAddress);
                 //
-                if (matchTime.Groups[1].Value != "" && Convert.ToInt32(timestamp) > LastIN && Convert.ToDouble(Amount.Replace('.',',')) > 0)
+                //Переворот HTML
+                HTML = ReverseString(HTML);
+                //Console.WriteLine(HTML);
+                //
+                Console.WriteLine(DateTime.Now + "  [Log]: Пользователь запросил обновление кошелька: " + WalletIn);
+
+                double balanceUpdate = ballance;
+                int counter = 0;
+                while (true)
                 {
-                    LastIN = Convert.ToInt32(timestamp);
-                    Console.WriteLine("+"+ Convert.ToDouble(Amount.Replace('.', ',')));
-                    balanceUpdate += Convert.ToDouble(Amount.Replace('.', ','));
-                    LastAcceted = Convert.ToDouble(Amount.Replace('.', ','));
-                    counter++;
+                    //Условия регуляров
+                    Match matchTime = Regex.Match(HTML, "}([01234567890]*?):\"pmatsemit");
+                    Match matchAmount = Regex.Match(HTML, "\",([-01234567890.]*?):\\\"tnuoma");
+                    string timestamp = ReverseString(matchTime.Groups[1].Value);
+                    string Amount = ReverseString(matchAmount.Groups[1].Value);
+                    //
+                    if (matchTime.Groups[1].Value != "" && Convert.ToInt32(timestamp) > LastIN && Convert.ToDouble(Amount.Replace('.', ',')) > 0)
+                    {
+                        LastIN = Convert.ToInt32(timestamp);
+                        Console.WriteLine("+" + Convert.ToDouble(Amount.Replace('.', ',')));
+                        balanceUpdate += Convert.ToDouble(Amount.Replace('.', ','));
+                        LastAcceted = Convert.ToDouble(Amount.Replace('.', ','));
+                        counter++;
+                    }
+                    else if (timestamp == "")
+                    {
+                        break;
+                    }
+                    // Удаение из HTML учтенных записей
+                    int index = HTML.IndexOf(matchTime.Groups[1].Value + ":\"pmatsemit");
+                    if (index != -1)
+                    {
+                        HTML = HTML.Remove(index, matchTime.Groups[1].Value.Length + 12);
+                    }
+                    index = HTML.IndexOf(matchAmount.Groups[1].Value + ":\"tnuoma");
+                    if (index != -1)
+                    {
+                        HTML = HTML.Remove(index, matchTime.Groups[1].Value.Length + 9);
+                    }
+                    // Console.WriteLine(timestamp + "       " + Amount + "        "+balanceUpdate);
+                    //
                 }
-                else if(timestamp == "")
+                Console.WriteLine("Для кошелька:  " + WalletIn + "   Было добавленно  " + counter + "  записей!!");
+                //Запись нового баланса и метки времени в БД
+                connection.Open();
+                Sqlcmd.CommandText = @"UPDATE BallanceCheck SET Ballance = :Ballance, LastIN = :LastIN, LastAcceted = :LastAcceted WHERE rowid=" + rowidFromBallance;
+                Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Single).Value = balanceUpdate;
+                Sqlcmd.Parameters.Add("LastIN", System.Data.DbType.Int32).Value = LastIN;
+                Sqlcmd.Parameters.Add("LastAcceted", System.Data.DbType.Single).Value = LastAcceted;
+                Sqlcmd.ExecuteNonQuery();
+                connection.Close();
+                //
+                //Дата последней транзакции
+                DateTime pDate = (new DateTime(1970, 1, 1, 0, 0, 0, 0)).AddSeconds(LastIN);
+                //
+                //Сообщение пользователю
+                if (pDate == new DateTime(1970, 1, 1, 0, 0, 0, 0))
                 {
-                    break;
+                    await client.SendTextMessageAsync(message.Chat.Id, "💸Ваш баланс " + balanceUpdate + "YTN"
+                    + "\n📆Дата последней записанной транзакции: Отсутствует"
+                    + "\n📨Количество монет в последней транзакции: " + LastAcceted);
                 }
-                // Удаение из HTML учтенных записей
-                int index = HTML.IndexOf(matchTime.Groups[1].Value+":\"pmatsemit");
-                if(index != -1)
+                else
                 {
-                    HTML = HTML.Remove(index, matchTime.Groups[1].Value.Length+12);
+
+
+                    await client.SendTextMessageAsync(message.Chat.Id, "💸Ваш баланс " + balanceUpdate + "YTN"
+                        + "\n📆Дата последней записанной транзакции: " + pDate
+                        + "\n📨Количество монет в последней транзакции: " + LastAcceted);
                 }
-                index = HTML.IndexOf(matchAmount.Groups[1].Value+":\"tnuoma");
-                if (index != -1)
+                //
+
+                //Клавиатура для профиля
+                var markup = new ReplyKeyboardMarkup();
+                markup.Keyboard = new KeyboardButton[][]
                 {
-                    HTML = HTML.Remove(index, matchTime.Groups[1].Value.Length+9);
+                new []
+                {
+                new KeyboardButton("📅История"),
+                new KeyboardButton("💸Баланс"),
+                new KeyboardButton("📤Вывод с баланса"),
+                },
+                new[]
+                {
+                    new KeyboardButton("Меню"),
                 }
-              // Console.WriteLine(timestamp + "       " + Amount + "        "+balanceUpdate);
+                };
+                markup.OneTimeKeyboard = true;
+                await client.SendTextMessageAsync(message.Chat.Id, "Куда дальше?", replyMarkup: markup);
                 //
             }
-            Console.WriteLine("Для кошелька:  " + WalletIn + "   Было добавленно  " + counter + "  записей!!");
-            //Запись нового баланса и метки времени в БД
-            connection.Open();
-            Sqlcmd.CommandText = @"UPDATE BallanceCheck SET Ballance = :Ballance, LastIN = :LastIN, LastAcceted = :LastAcceted WHERE rowid=" + rowidFromBallance;
-            Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Single).Value = balanceUpdate;
-            Sqlcmd.Parameters.Add("LastIN", System.Data.DbType.Int32).Value = LastIN;
-            Sqlcmd.Parameters.Add("LastAcceted", System.Data.DbType.Single).Value = LastAcceted;
-            Sqlcmd.ExecuteNonQuery();
-            connection.Close();
-            //
-            //Дата последней транзакции
-            DateTime pDate = (new DateTime(1970, 1, 1, 0, 0, 0, 0)).AddSeconds(LastIN);
-            //
-            //Сообщение пользователю
-
-            await client.SendTextMessageAsync(message.Chat.Id, "💸Ваш баланс "+balanceUpdate+"YTN"
-                + "\n📆Дата последней записанной транзакции: "+pDate
-                + "📨Количество монет в последней транзакции: "+ LastAcceted);
-
-            //
-
-
+            catch(Exception)
+            {
+                await client.SendTextMessageAsync(message.Chat.Id, "Если видите эту ошибку пишите @UtkaZapas, Код ошибки 0x0001");
+                Console.WriteLine("код ошибки 0x0001");
+            }
         }
 
         public static string ReverseString(string s)

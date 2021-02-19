@@ -6,6 +6,7 @@ using System.Data.SQLite;
 using System.Timers;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using System.Linq;
 
 namespace YENTEN.Command.Commands.Game
 {
@@ -23,7 +24,7 @@ namespace YENTEN.Command.Commands.Game
         {
 
 
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
 
             connection.Open();
@@ -40,8 +41,24 @@ namespace YENTEN.Command.Commands.Game
                 connection.Open();
                 Sqlcmd.CommandText ="DELETE FROM CurrentGame";
                 Sqlcmd.ExecuteNonQuery();
+                Sqlcmd.CommandText = "INSERT INTO CurrentGame VALUES(@TelegramID, @AmountYTN,@Team)";
+                Sqlcmd.Parameters.AddWithValue("@TelegramID", 0);
+                Sqlcmd.Parameters.AddWithValue("@AmountYTN", 0);
+                Sqlcmd.Parameters.AddWithValue("@Team", 0);
+                Sqlcmd.ExecuteNonQuery();
                 connection.Close();
             }
+            else
+            {
+                connection.Open();
+                Sqlcmd.CommandText = "INSERT INTO CurrentGame VALUES(@TelegramID, @AmountYTN,@Team)";
+                Sqlcmd.Parameters.AddWithValue("@TelegramID", 0);
+                Sqlcmd.Parameters.AddWithValue("@AmountYTN", 0);
+                Sqlcmd.Parameters.AddWithValue("@Team", 0);
+                Sqlcmd.ExecuteNonQuery();
+                connection.Close();
+            }
+            
         }
 
         private static void GameLogic(SQLiteConnection connection, SQLiteCommand Sqlcmd, int TeamHeadCount, int TeamTailsCount)
@@ -49,7 +66,6 @@ namespace YENTEN.Command.Commands.Game
             //Парсер Random.org
             string urlAddress = "https://www.random.org/integers/?num=1&min=0&max=1&col=1&base=10&format=plain&rnd=new";
             int TeamWinID =Convert.ToInt32(BallanceCheck.getResponse(urlAddress));
-            Console.WriteLine(TeamWinID);
             //
 
             //Подсчет суммы по командам     Количество игроков в командах     Head - орёл Tails- Решка
@@ -76,137 +92,198 @@ namespace YENTEN.Command.Commands.Game
                 }
             }
             connection.Close();
-            //
-            string[] AllArray = new string[(TeamHeadCount + TeamTailsCount)];
-            int Count = 0;
-            //
+            int LoserCounter = 0;
+            int WinnersCounter = 0;
             if (TeamWinID == 0)
             {
-                string[] WinnersArray = new string[TeamHeadCount]; 
-                for (int i =0; i < TeamHeadCount; i++)
+                string[] WinnersArray = new string[TeamHeadCount];
+                double[] UserWinerAmount = new double[TeamHeadCount];
+                int[] UserWinerTelegramID = new int[TeamHeadCount];
+                int counter = 0;
+                //
+                connection.Open();
+                Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=0";
+                SQLiteDataReader reader = Sqlcmd.ExecuteReader();
+                while (reader.Read())
                 {
-                    connection.Open();
-
-                    Sqlcmd.CommandText = "SELECT TelegramID FROM CurrentGame WHERE Team=0";
-                    int UserWinerTelegramID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-                    Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE Team=0";
-                    double UserWinerAmount = Convert.ToDouble(Sqlcmd.ExecuteScalar());
-                    connection.Close();
-
-                    //Считаем потенциальный выигрыш
+                    UserWinerTelegramID[counter] = Convert.ToInt32(reader["TelegramID"]);
+                    UserWinerAmount[counter] = Convert.ToDouble(reader["AmountYTN"]);
+                    counter++;
+                }
+                reader.Close();
+                connection.Close();
+                //
+                for (int i = 0; i < TeamHeadCount; i++)
+                {
+                    //Считаем  выигрыш
                     double UserWinerPercent;
-                    UserWinerPercent = (UserWinerAmount * 100) / TeamHeadAmount;
-                    UserWinerAmount = UserWinerAmount + TeamTailsAmount * (UserWinerPercent / 100);
+                    UserWinerPercent = (UserWinerAmount[i] * 100) / TeamHeadAmount;
+                    UserWinerAmount[i] = UserWinerAmount[i] + TeamTailsAmount * (UserWinerPercent / 100);
                     //
-
-                    //Добавляем выигрыш на счет
-                    connection.Open();
-                    Sqlcmd.CommandText = "SELECT WalletIN FROM UserInfo WHERE TelegramID=" + UserWinerTelegramID;
-                    string UserWinerWalletIN = Convert.ToString(Sqlcmd.ExecuteScalar());
-                    Sqlcmd.CommandText = "SELECT Ballance FROM BallanceCheck WHERE WalletIN="+"'" + UserWinerWalletIN + "'";
-                    double UserWinerBallance = Convert.ToDouble(Sqlcmd.ExecuteScalar());
-                    Sqlcmd.CommandText = @"UPDATE BallanceCheck SET Ballance = :Ballance WHERE WalletIN=" + "'"+UserWinerWalletIN+"'";
-                    Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Single).Value = UserWinerBallance+UserWinerAmount;
-                    Sqlcmd.ExecuteNonQuery();
-                    connection.Close();
-                    //
+                    UniversalLogic(connection, Sqlcmd, UserWinerTelegramID, UserWinerAmount, i);
                     //Записываем победителей
-                    WinnersArray[Count] = Convert.ToString(UserWinerTelegramID);
-                    Count++;
+                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i]) + "=(" + Convert.ToDouble(UserWinerAmount[i]) + ")"; ;
+                    WinnersCounter++;
                     //
-
-
-                    //Удаляем запись из CurrentGame;
-                    connection.Open();
-                    Sqlcmd.CommandText ="DELETE FROM CurrentGame WHERE TelegramID=" + UserWinerTelegramID;
-                    Sqlcmd.ExecuteNonQuery();
-                    connection.Close();
-                    //
-                    Console.WriteLine(UserWinerTelegramID + "    HW:   "+(TeamTailsAmount * (UserWinerPercent / 100))+"      W" + UserWinerAmount+"  B "+UserWinerBallance+"   W+B  "+(UserWinerBallance+UserWinerAmount));
-
 
                 }
+                //Запись данных проигравших в массивы
+                string[] LosersArray = new string[TeamHeadCount];
+                double[] UserLoserAmount = new double[TeamHeadCount];
+                int[] UserLoserTelegramID = new int[TeamHeadCount];
+                counter = 0;
+                connection.Open();
+                Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=1";
+                SQLiteDataReader reader2 = Sqlcmd.ExecuteReader();
+                while (reader2.Read())
+                {
+                    UserLoserTelegramID[counter] = Convert.ToInt32(reader2["TelegramID"]);
+                    UserLoserAmount[counter] = Convert.ToDouble(reader2["AmountYTN"]);
+                    counter++;
+                }
+                reader2.Close();
+                connection.Close();
+                //
+                for (int i = 0; i < TeamTailsCount; i++)
+                {
+                    //Записываем проигравших
+                    LosersArray[LoserCounter] = Convert.ToString(UserLoserTelegramID[i]) + "=(" + Convert.ToDouble(UserLoserAmount[i]) + ")";
+                    LoserCounter++;
+                    //
+                }
+                //Переделываем массивы в строки
+                string[] AllArray = new string[(LosersArray.Length + WinnersArray.Length)];
+                LosersArray.CopyTo(AllArray, 0);
+                WinnersArray.CopyTo(AllArray, LosersArray.Length);
+                string Losers = string.Join(",", LosersArray);
+                string Winners = string.Join(",", WinnersArray);
+                string AllPlayers = string.Join(",", AllArray);
+                RecordToHistory(connection, Sqlcmd, Losers, Winners, TeamWinID, AllPlayers);
 
             }
             else
             {
                 string[] WinnersArray = new string[TeamTailsCount];
+                double[] UserWinerAmount = new double[TeamTailsCount];
+                int[] UserWinerTelegramID = new int[TeamTailsCount];
+                int counter = 0;
+
+                //Запись данных победителей в массивы
+                connection.Open();
+                Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=1";
+                SQLiteDataReader reader4 = Sqlcmd.ExecuteReader();
+                while (reader4.Read())
+                {
+                    UserWinerTelegramID[counter] = Convert.ToInt32(reader4["TelegramID"]);
+                    UserWinerAmount[counter] = Convert.ToDouble(reader4["AmountYTN"]);
+                    counter++;
+                }
+                reader4.Close();
+                connection.Close();
+                //
                 for (int i = 0; i < TeamTailsCount; i++)
                 {
-                    connection.Open();
-
-                    Sqlcmd.CommandText = "SELECT TelegramID FROM CurrentGame WHERE Team=1";
-                    int UserWinerTelegramID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-                    Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE Team=1";
-                    double UserWinerAmount = Convert.ToDouble(Sqlcmd.ExecuteScalar());
-                    connection.Close();
-                    Console.WriteLine("USER winer Amount:  "+UserWinerAmount);
-                   //Считаем потенциальный выигрыш
-                   double UserWinerPercent;
-                    UserWinerPercent = (UserWinerAmount * 100) / TeamTailsAmount;
-                    UserWinerAmount = UserWinerAmount + TeamHeadAmount * (UserWinerPercent / 100);
+                    //Считаем потенциальный выигрыш
+                    double UserWinerPercent;
+                    UserWinerPercent = (UserWinerAmount[i] * 100) / TeamTailsAmount;
+                    UserWinerAmount[i] = UserWinerAmount[i] + TeamHeadAmount * (UserWinerPercent / 100);
                     //
 
-                    //Добавляем выигрыш на счет
-                    connection.Open();
-                    Sqlcmd.CommandText = "SELECT WalletIN FROM UserInfo WHERE TelegramID=" + UserWinerTelegramID;
-                    string UserWinerWalletIN = Convert.ToString(Sqlcmd.ExecuteScalar());
-                    Sqlcmd.CommandText = "SELECT Ballance FROM BallanceCheck WHERE WalletIN=" + "'" + UserWinerWalletIN + "'";
-                    double UserWinerBallance = Convert.ToDouble(Sqlcmd.ExecuteScalar());
-                    Sqlcmd.CommandText = @"UPDATE BallanceCheck SET Ballance = :Ballance WHERE WalletIN=" + "'" + UserWinerWalletIN + "'";
-                    Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Single).Value = UserWinerBallance + UserWinerAmount;
-                    Sqlcmd.ExecuteNonQuery();
-                    connection.Close();
-                    //
-
+                    UniversalLogic(connection, Sqlcmd, UserWinerTelegramID, UserWinerAmount, i);
                     //Записываем победителей
-                    WinnersArray[Count] = Convert.ToString(UserWinerTelegramID);
-                    Count++;
+                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i])+"=("+Convert.ToDouble(UserWinerAmount[i])+")";
+                    WinnersCounter++;
                     //
-
-                    //Удаляем запись из CurrentGame;
-                    connection.Open();
-                    Sqlcmd.CommandText = "DELETE FROM CurrentGame WHERE TelegramID=" + UserWinerTelegramID;
-                    Sqlcmd.ExecuteNonQuery();
-                    connection.Close();
-                    //
-                    Console.WriteLine(UserWinerTelegramID + "    HW:   " + (TeamHeadAmount * (UserWinerPercent / 100)) + "      W" + UserWinerAmount + "  B " + UserWinerBallance + "   W+B  " + (UserWinerBallance + UserWinerAmount));
-
                 }
+                //Запись данных проигравших в массивы
+                string[] LosersArray = new string[TeamHeadCount];
+                double[] UserLoserAmount = new double[TeamHeadCount];
+                int[] UserLoserTelegramID = new int[TeamHeadCount];
+                counter = 0;
+                connection.Open();
+                Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=0";
+                SQLiteDataReader reader3 = Sqlcmd.ExecuteReader();
+                while (reader3.Read())
+                {
+                    UserLoserTelegramID[counter] = Convert.ToInt32(reader3["TelegramID"]);
+                    UserLoserAmount[counter] = Convert.ToDouble(reader3["AmountYTN"]);
+                    counter++;
+                }
+                reader3.Close();
+                connection.Close();
+                //
+                for (int i = 0; i < TeamHeadCount; i++)
+                {
+                    //Записываем проигравших
+                    LosersArray[LoserCounter] = Convert.ToString(UserLoserTelegramID[i]) + "=(" + Convert.ToDouble(UserLoserAmount[i]) + ")";
+                    LoserCounter++;
+                    //
+                }
+                //Переделываем массивы в строки
+                string[] AllArray = new string[(LosersArray.Length + WinnersArray.Length)];
+                LosersArray.CopyTo(AllArray, 0);
+                WinnersArray.CopyTo(AllArray, LosersArray.Length);
+                string Losers = string.Join(",", LosersArray);
+                string Winners = string.Join(",", WinnersArray);
+                string AllPlayers = string.Join(",", AllArray);
+                // Записываем в историю
+                RecordToHistory(connection, Sqlcmd, Losers, Winners, TeamWinID, AllPlayers) ;
+                //
             }
 
-            //Записываем всех пользователей
-            int AllCounter = 0;
+            //Добавляем в лог запись игры и выводим в консоль
             connection.Open();
-            Sqlcmd.CommandText = "SELECT TelegramID FROM CurrentGame";
-            SQLiteDataReader reader = Sqlcmd.ExecuteReader();
-            while (reader.Read())
-            {
-                AllArray[AllCounter] = reader["TelegramID"].ToString();
-                AllCounter++;
-            }
-            reader.Close();
+            Sqlcmd.CommandText = "SELECT max(GameID) FROM GameHistory";
+            int GameID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
             connection.Close();
-            //
-
-            //Добавляем в лог запись игры
-            string appendText = DateTime.Now + "  [Log]: Game № " +
+            string appendText = DateTime.Now + "  [Log]: Game № " +GameID+
                 "\nКоличество участников: "+(TeamHeadCount+TeamTailsCount)
                 +"\nКоличество участников команда Ореёл: "+TeamHeadCount+"  Баланс команды: "+TeamHeadAmount
                 + "\nКоличество участников команда Решка: " + TeamTailsCount + "  Баланс команды: " + TeamTailsAmount
                 + "\nОбщая ставка: "+(TeamHeadAmount+TeamTailsAmount)
                 +"\nПобедила команда: "+TeamWinID + Environment.NewLine;
 
-            System.IO.File.AppendAllText(@"D:\YentLuckyBot\log.txt", appendText);
+            System.IO.File.AppendAllText("log.txt", appendText);
+            Console.WriteLine(appendText);
             //
 
+        }
 
+        private static void UniversalLogic(SQLiteConnection connection, SQLiteCommand Sqlcmd, int[] UserWinerTelegramID, double[] UserWinerAmount, int i)
+        {
+            //Добавляем выигрыш на счет
+            connection.Open();
+            Sqlcmd.CommandText = "SELECT WalletIN FROM UserInfo WHERE TelegramID=" + UserWinerTelegramID[i];
+            string UserWinerWalletIN = Convert.ToString(Sqlcmd.ExecuteScalar());
+            Sqlcmd.CommandText = "SELECT Ballance FROM BallanceCheck WHERE WalletIN=" + "'" + UserWinerWalletIN + "'";
+            double UserWinerBallance = Convert.ToDouble(Sqlcmd.ExecuteScalar());
+            Sqlcmd.CommandText = @"UPDATE BallanceCheck SET Ballance = :Ballance WHERE WalletIN=" + "'" + UserWinerWalletIN + "'";
+            Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Single).Value = UserWinerBallance + UserWinerAmount[i];
+            Sqlcmd.ExecuteNonQuery();
+            connection.Close();
             //
-            for (int i =0; i < (TeamHeadCount+TeamTailsCount); i++)
-            {
-                Console.WriteLine("Пользователь: "+AllArray[i]);
-            }
-            //
+
+        }
+
+
+        private static void RecordToHistory(SQLiteConnection connection, SQLiteCommand Sqlcmd, string Losers, string Winners, int Team, string AllPlayers)
+        {
+            Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+
+            connection.Open();
+            Sqlcmd.CommandText = "SELECT max(GameID) FROM GameHistory";
+            int GameID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
+            Sqlcmd.CommandText = "INSERT INTO GameHistory VALUES(@GameID, @Losers, @AllPlayers, @Winners, @GameDate, @Team, @NotificationStatus)"; 
+            Sqlcmd.Parameters.AddWithValue("@GameID", (GameID+1));
+            Sqlcmd.Parameters.AddWithValue("@Losers", Losers);
+            Sqlcmd.Parameters.AddWithValue("@Winners", Winners);
+            Sqlcmd.Parameters.AddWithValue("@AllPlayers", AllPlayers);
+            Sqlcmd.Parameters.AddWithValue("@GameDate", unixTimestamp);
+            Sqlcmd.Parameters.AddWithValue("@Team", Team);
+            Sqlcmd.Parameters.AddWithValue("@NotificationStatus", 0);
+            Sqlcmd.ExecuteNonQuery();
+
+            connection.Close();
         }
 
 

@@ -20,10 +20,15 @@ namespace YENTEN.Command.Commands
             var markup = new ReplyKeyboardMarkup();
             markup.Keyboard = new KeyboardButton[][]
             {
-                new KeyboardButton[]
+                new []
                 {
-                new KeyboardButton("Меню"),
-                new KeyboardButton("💸Баланс")
+                new KeyboardButton("📅История"),
+                new KeyboardButton("💸Баланс"),
+                new KeyboardButton("📤Вывод с баланса"),
+                },
+                new[]
+                {
+                    new KeyboardButton("Меню"),
                 }
             };
             markup.OneTimeKeyboard = true;
@@ -31,7 +36,7 @@ namespace YENTEN.Command.Commands
             //
 
 
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             connection.Open();
             Sqlcmd.CommandText = "SELECT rowid FROM UserInfo WHERE TelegramID=" + message.Chat.Id;

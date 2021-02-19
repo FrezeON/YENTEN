@@ -14,10 +14,10 @@ namespace YENTEN.Command.Commands.Game
         private static SQLiteConnection connection;
         public override string[] Names { get; set; } = new string[] { "Игра", "Войти в игру" };
 
-        public override async void Execute(Message message, TelegramBotClient client)
+        public override void Execute(Message message, TelegramBotClient client)
         {
 
-            connection = new SQLiteConnection(@"Data Source=D:\YentLuckyBot\MainDB1.db");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             //Подсчет суммы по командам     Количество игроков в командах     Head - орёл Tails- Решка
             double TeamHeadAmount =0;
@@ -29,13 +29,13 @@ namespace YENTEN.Command.Commands.Game
             int maxRowID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = "SELECT min(rowid) FROM CurrentGame";
             int minRowID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            for (int i = minRowID; i <= maxRowID; i++)
+            for (int i = minRowID; i < maxRowID+1; i++)
             {
                 Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE rowid="+i;
                 double Amount = Convert.ToDouble(Sqlcmd.ExecuteScalar());
                 Sqlcmd.CommandText = "SELECT Team FROM CurrentGame WHERE rowid=" + i;
                 int TeamNumber = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-                Console.WriteLine(TeamNumber + "      " + Amount);
+                //Console.WriteLine(TeamNumber + "      " + Amount);
                 if(TeamNumber == 0)
                 {
                     TeamHeadAmount += Amount;
@@ -51,8 +51,14 @@ namespace YENTEN.Command.Commands.Game
             //
 
             //Процентное соотношение по балансу
-            double TeamHeadPercent = Math.Round((TeamHeadAmount*100) / (TeamHeadAmount + TeamTailsAmount), 2);
-            double TeamTailsPercent = Math.Round(100 - TeamHeadPercent,2);
+            double TeamHeadPercent = 0;
+            double TeamTailsPercent = 0;
+            if (TeamHeadAmount != 0)
+            {
+                 TeamHeadPercent = Math.Round((TeamHeadAmount * 100) / (TeamHeadAmount + TeamTailsAmount), 2);
+                 TeamTailsPercent = Math.Round(100 - TeamHeadPercent, 2);
+            }
+
             //       
             //Поиск пользователя в игре
             connection.Open();
@@ -86,11 +92,11 @@ namespace YENTEN.Command.Commands.Game
                 new[]
                 {
                     new KeyboardButton("❓Информация"),
-                    new KeyboardButton("Меню"),
                     new KeyboardButton("👤Профиль")
                 }
             };
             markup.OneTimeKeyboard = true;
+            await client.SendTextMessageAsync(message.Chat.Id, "Куда дальше?", replyMarkup: markup);
             //
             //Берем данные пользователя
             connection.Open();
@@ -116,8 +122,24 @@ namespace YENTEN.Command.Commands.Game
                 UserWinAmount = UserAmount + TeamHeadAmount * (UserPercent / 100);
             }
             //
+            if (TeamHeadPercent == 0)
+            {
+                await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
+                + "\n💿Орёл: " + 0 + "  vs  📀Решка: " + TeamTailsCout
+                + "\nКоличество монет по командам:"
+                + "\n💿Орёл: " + TeamHeadAmount + "YTN   vs  📀Решка: " + TeamTailsAmount
+                + "YTN \n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
+                + "\n\nВаша команда: " + Teams[UserTeamNumber]
+                + "\nСтавка: " + UserAmount + "YTN"
+                + "\nВаш вклад в команду: " + Math.Round(UserPercent, 2) + "%"
+                + "\nПотенциальный выигрыш: " + UserWinAmount + "YTN");
+            }
+            else
+            {
+
+            
             await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
-                 + "\n💿Орёл: " + TeamHeadCout + "  vs  📀Решка: " + TeamTailsCout
+                 + "\n💿Орёл: " + (TeamHeadCout-1) + "  vs  📀Решка: " + TeamTailsCout
                  + "\nКоличество монет по командам:"
                  + "\n💿Орёл: " + TeamHeadAmount + "YTN   vs  📀Решка: " + TeamTailsAmount
                  + "YTN \n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
@@ -125,6 +147,7 @@ namespace YENTEN.Command.Commands.Game
                  + "\nСтавка: " + UserAmount + "YTN"
                  + "\nВаш вклад в команду: " + Math.Round(UserPercent, 2) + "%"
                  + "\nПотенциальный выигрыш: " + UserWinAmount + "YTN");
+            }
             await client.SendTextMessageAsync(message.Chat.Id, "Что дальше?", replyMarkup: markup);
         }
 
@@ -146,13 +169,24 @@ namespace YENTEN.Command.Commands.Game
                 }
             };
             markup.OneTimeKeyboard = true;
+            if (TeamHeadPercent == 0)
+            {
+                await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
+                + "\n💿Орёл: " + 0 + "  vs  📀Решка: " + TeamTailsCout
+                + "\nКоличество монет по командам:"
+                + "\n💿Орёл: " + TeamHeadAmount + "YTN  vs  📀Решка: " + TeamTailsAmount
+                + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%");
+            }
+            else
+            {
+                await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
+                + "\n💿Орёл: " + TeamHeadCout + "  vs  📀Решка: " + TeamTailsCout
+                + "\nКоличество монет по командам:"
+                + "\n💿Орёл: " + TeamHeadAmount + "YTN  vs  📀Решка: " + TeamTailsAmount
+                + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%");
+            }
 
             //
-            await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
-                 + "\n💿Орёл: " + TeamHeadCout + "  vs  📀Решка: " + TeamTailsCout
-                 + "\nКоличество монет по командам:"
-                 + "\n💿Орёл: " + TeamHeadAmount + "YTN  vs  📀Решка: " + TeamTailsAmount
-                 + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%");
             await client.SendTextMessageAsync(message.Chat.Id, "На кого ставим?", replyMarkup: markup);
         }
     }
