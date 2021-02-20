@@ -132,21 +132,39 @@ namespace YENTEN.Command.Commands.Game
                 + "\n\nВаша команда: " + Teams[UserTeamNumber]
                 + "\nСтавка: " + UserAmount + "YTN"
                 + "\nВаш вклад в команду: " + Math.Round(UserPercent, 2) + "%"
-                + "\nПотенциальный выигрыш: " + UserWinAmount + "YTN");
+                + "\nПотенциальный выигрыш: " + UserWinAmount + "YTN"
+                + "\n👥Недостаточно игроков для начала игры!");
+            }
+            else if (TeamHeadCout >= 1 && TeamTailsCout >= 1)
+            {
+                connection.Open();
+                Sqlcmd.CommandText = "SELECT GameTime FROM NextGameTime WHERE GameTime !=0";
+                string StartTime = Convert.ToString(Sqlcmd.ExecuteScalar());
+                connection.Close();
+
+                await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
+                     + "\n💿Орёл: " + (TeamHeadCout) + "  vs  📀Решка: " + TeamTailsCout
+                     + "\nКоличество монет по командам:"
+                     + "\n💿Орёл: " + TeamHeadAmount + "YTN   vs  📀Решка: " + TeamTailsAmount
+                     + "YTN \n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
+                     + "\n\nВаша команда: " + Teams[UserTeamNumber]
+                     + "\nСтавка: " + UserAmount + "YTN"
+                     + "\nВаш вклад в команду: " + Math.Round(UserPercent, 2) + "%"
+                     + "\nПотенциальный выигрыш: " + UserWinAmount + "YTN"
+                     + "\n⏰Раунд закончится: " + StartTime);
             }
             else
             {
-
-            
-            await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
-                 + "\n💿Орёл: " + (TeamHeadCout-1) + "  vs  📀Решка: " + TeamTailsCout
-                 + "\nКоличество монет по командам:"
-                 + "\n💿Орёл: " + TeamHeadAmount + "YTN   vs  📀Решка: " + TeamTailsAmount
-                 + "YTN \n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
-                 + "\n\nВаша команда: " + Teams[UserTeamNumber]
-                 + "\nСтавка: " + UserAmount + "YTN"
-                 + "\nВаш вклад в команду: " + Math.Round(UserPercent, 2) + "%"
-                 + "\nПотенциальный выигрыш: " + UserWinAmount + "YTN");
+                await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
+              + "\n💿Орёл: " + TeamHeadCout + "  vs  📀Решка: " + TeamTailsCout
+              + "\nКоличество монет по командам:"
+              + "\n💿Орёл: " + TeamHeadAmount + "YTN   vs  📀Решка: " + TeamTailsAmount
+              + "YTN \n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
+              + "\n\nВаша команда: " + Teams[UserTeamNumber]
+              + "\nСтавка: " + UserAmount + "YTN"
+              + "\nВаш вклад в команду: " + Math.Round(UserPercent, 2) + "%"
+              + "\nПотенциальный выигрыш: " + UserWinAmount + "YTN"
+              + "\n👥Недостаточно игроков для начала игры!");
             }
             await client.SendTextMessageAsync(message.Chat.Id, "Что дальше?", replyMarkup: markup);
         }
@@ -175,7 +193,22 @@ namespace YENTEN.Command.Commands.Game
                 + "\n💿Орёл: " + 0 + "  vs  📀Решка: " + TeamTailsCout
                 + "\nКоличество монет по командам:"
                 + "\n💿Орёл: " + TeamHeadAmount + "YTN  vs  📀Решка: " + TeamTailsAmount
-                + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%");
+                + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%" 
+                + "\n👥Недостаточно игроков для начала игры!");
+            }
+            else if (TeamHeadCout>=1&& TeamTailsCout >=1)
+            {
+                connection.Open();
+                Sqlcmd.CommandText = "SELECT GameTime FROM NextGameTime WHERE GameTime !=0";
+                string StartTime = Convert.ToString(Sqlcmd.ExecuteScalar());
+                connection.Close();
+
+                await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
+                + "\n💿Орёл: " + TeamHeadCout + "  vs  📀Решка: " + TeamTailsCout
+                + "\nКоличество монет по командам:"
+                + "\n💿Орёл: " + TeamHeadAmount + "YTN  vs  📀Решка: " + TeamTailsAmount
+                + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
+                + "\n⏰Раунд закончится: " + StartTime);
             }
             else
             {
@@ -183,8 +216,10 @@ namespace YENTEN.Command.Commands.Game
                 + "\n💿Орёл: " + TeamHeadCout + "  vs  📀Решка: " + TeamTailsCout
                 + "\nКоличество монет по командам:"
                 + "\n💿Орёл: " + TeamHeadAmount + "YTN  vs  📀Решка: " + TeamTailsAmount
-                + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%");
+                + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
+                + "\n👥Недостаточно игроков для начала игры!");
             }
+
 
             //
             await client.SendTextMessageAsync(message.Chat.Id, "На кого ставим?", replyMarkup: markup);

@@ -22,11 +22,8 @@ namespace YENTEN.Command.Commands.Game
         }
         public static void Run(Object source, ElapsedEventArgs e)
         {
-
-
-            connection = new SQLiteConnection("Data Source=MainDB1.db");
+             connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
-
             connection.Open();
             Sqlcmd.CommandText = "DELETE FROM CurrentGame WHERE  AmountYTN=0";
             Sqlcmd.ExecuteNonQuery();
@@ -34,7 +31,15 @@ namespace YENTEN.Command.Commands.Game
             int TeamHeadCount = Convert.ToInt32(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = "SELECT COUNT(*) FROM CurrentGame WHERE Team = 1";
             int TeamTailsCount = Convert.ToInt32(Sqlcmd.ExecuteScalar());
+            //Запись времени
+            string TimeStart = DateTime.Now.ToString("HH") + ":" + Convert.ToString(DateTime.Now.Minute + 5);
+            Sqlcmd.CommandText = "DELETE FROM NextGameTime";
+            Sqlcmd.ExecuteNonQuery();
+            Sqlcmd.CommandText = "INSERT INTO NextGameTime VALUES(@GameTime)";
+            Sqlcmd.Parameters.AddWithValue("@GameTime", TimeStart);
+            Sqlcmd.ExecuteNonQuery();
             connection.Close();
+            //
             if (TeamHeadCount != 0 && TeamTailsCount != 0)
             {
                 GameLogic(connection, Sqlcmd, TeamHeadCount, TeamTailsCount);
@@ -48,7 +53,7 @@ namespace YENTEN.Command.Commands.Game
                 Sqlcmd.ExecuteNonQuery();
                 connection.Close();
             }
-            else
+            else if( TeamHeadCount ==0 && TeamTailsCount ==0)
             {
                 connection.Open();
                 Sqlcmd.CommandText = "INSERT INTO CurrentGame VALUES(@TelegramID, @AmountYTN,@Team)";
@@ -58,7 +63,7 @@ namespace YENTEN.Command.Commands.Game
                 Sqlcmd.ExecuteNonQuery();
                 connection.Close();
             }
-            
+
         }
 
         private static void GameLogic(SQLiteConnection connection, SQLiteCommand Sqlcmd, int TeamHeadCount, int TeamTailsCount)

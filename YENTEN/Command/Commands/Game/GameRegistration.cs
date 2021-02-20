@@ -46,12 +46,14 @@ namespace YENTEN.Command.Commands.Game
                 
                 await client.SendTextMessageAsync(message.Chat.Id, "Введите Вашу ставку в формате 14 или (14.531)", ParseMode.Default, false, false, 0, replyMarkup: new ForceReplyMarkup { Selective = true });
                 connection.Open();
+                Sqlcmd.CommandText = "DELETE FROM CurrentGame WHERE TelegramID=0";
+                Sqlcmd.ExecuteNonQuery();
                 Sqlcmd.CommandText = "INSERT INTO CurrentGame VALUES(@TelegramID, @AmountYTN, @Team)";
                 Sqlcmd.Parameters.AddWithValue("@TelegramID", message.From.Id);
                 Sqlcmd.Parameters.AddWithValue("@AmountYTN", 0);
                 Sqlcmd.Parameters.AddWithValue("@Team", TeamId);
                 Sqlcmd.ExecuteNonQuery();
-                connection.Close();
+                connection.Close(); 
             }
             else if (AmountInCurrentGame == 0)
             {
@@ -59,6 +61,8 @@ namespace YENTEN.Command.Commands.Game
                 connection.Open();
                 Sqlcmd.CommandText = @"UPDATE CurrentGame SET Team = :Team WHERE TelegramID=" + message.Chat.Id;
                 Sqlcmd.Parameters.Add("Team", System.Data.DbType.Single).Value = TeamId;
+                Sqlcmd.ExecuteNonQuery();
+                Sqlcmd.CommandText = "DELETE FROM CurrentGame WHERE TelegramID = 0";
                 Sqlcmd.ExecuteNonQuery();
                 connection.Close();
                 await client.SendTextMessageAsync(message.Chat.Id, "Введите Вашу ставку в формате 14 или (14.531)", ParseMode.Default, false, false, 0, replyMarkup: new ForceReplyMarkup { Selective = true });
