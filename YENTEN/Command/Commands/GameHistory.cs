@@ -19,7 +19,7 @@ namespace YENTEN.Command.Commands
         {
             connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
-            int[] UserGameId = new int[5];
+            int[] GameId = new int[5];
             string[] losers = new string[5];
             string[] Winners = new string[5];
             string[] AllPlayers = new string[5];
@@ -32,7 +32,7 @@ namespace YENTEN.Command.Commands
             SQLiteDataReader reader = Sqlcmd.ExecuteReader();
             while (reader.Read() && Counter < 5)
             {
-                UserGameId[Counter] = Convert.ToInt32(reader["GameID"]);
+                GameId[Counter] = Convert.ToInt32(reader["GameID"]);
                 losers[Counter] = Convert.ToString(reader["losers"]);
                 Winners[Counter] = Convert.ToString(reader["Winners"]);
                 AllPlayers[Counter] = Convert.ToString(reader["AllPlayers"]);
@@ -46,29 +46,31 @@ namespace YENTEN.Command.Commands
             await client.SendTextMessageAsync(message.Chat.Id, "Вот ваши последние 5 игр:");
             for (int i = 4; i >= 0; i--)
             {
-                if (UserGameId[i] != 0)
+                if (GameId[i] != 0)
                 {
                     //Timespan в дату
                     DateTime pDate = (new DateTime(1970, 1, 1, 0, 0, 0, 0)).AddSeconds(GameDate[i]);
                     //
-                    Match matchAmount = Regex.Match(AllPlayers[i], Convert.ToString(message.Chat.Id) + "=\\((.*?)\\)");
                     if (Winners[i].Contains(Convert.ToString(message.Chat.Id)))
                     {
-                        await client.SendTextMessageAsync(message.Chat.Id, "📁Номер игры: " + UserGameId[i]
+                        Match matchAmount = Regex.Match(AllPlayers[i], Convert.ToString(message.Chat.Id) + "=\\((.*?):(.*?)\\)");
+                        await client.SendTextMessageAsync(message.Chat.Id, "📁Номер игры: " + GameId[i]
                         + "\n📅Дата игры: " + pDate
                         + "\n🛡Победила команда: " + Teams[Team[i]]
-                        + "\n💰Ваш выигрыш: " + matchAmount.Groups[1].Value);
+                        + "\n💰Ваша ставка: " + matchAmount.Groups[2].Value+"YTN"
+                        + "\n💎Ваш выигрыш: " + matchAmount.Groups[1].Value+"YTN");
                     }
                     else
                     {
-                        await client.SendTextMessageAsync(message.Chat.Id, "📁Номер игры: " + UserGameId[i]
+                        Match matchAmountLoser = Regex.Match(AllPlayers[i], Convert.ToString(message.Chat.Id) + "=\\((.*?)\\)");
+                        await client.SendTextMessageAsync(message.Chat.Id, "📁Номер игры: " + GameId[i]
                         + "\n📅Дата игры: " + pDate
                         + "\n🛡Победила команда: " + Teams[Team[i]]
-                        + "\n💰Ваш проигрыш: " + matchAmount.Groups[1].Value);
+                        + "\n💰Ваш проигрыш: " + matchAmountLoser.Groups[1].Value+"YTN");
                     }
 
                 }
-                else if (i == 0 && UserGameId[4] ==0)
+                else if (i == 0 && GameId[4] ==0)
                 {
                     await client.SendTextMessageAsync(message.Chat.Id,"В вашей истории пока нет завершенных игр");
                 }

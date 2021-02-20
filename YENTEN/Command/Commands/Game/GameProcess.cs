@@ -98,6 +98,7 @@ namespace YENTEN.Command.Commands.Game
             {
                 string[] WinnersArray = new string[TeamHeadCount];
                 double[] UserWinerAmount = new double[TeamHeadCount];
+                double[] UserWinerBet = new double[TeamHeadCount];
                 int[] UserWinerTelegramID = new int[TeamHeadCount];
                 int counter = 0;
                 //
@@ -107,7 +108,7 @@ namespace YENTEN.Command.Commands.Game
                 while (reader.Read())
                 {
                     UserWinerTelegramID[counter] = Convert.ToInt32(reader["TelegramID"]);
-                    UserWinerAmount[counter] = Convert.ToDouble(reader["AmountYTN"]);
+                    UserWinerBet[counter] = Convert.ToDouble(reader["AmountYTN"]);
                     counter++;
                 }
                 reader.Close();
@@ -117,12 +118,12 @@ namespace YENTEN.Command.Commands.Game
                 {
                     //Считаем  выигрыш
                     double UserWinerPercent;
-                    UserWinerPercent = (UserWinerAmount[i] * 100) / TeamHeadAmount;
-                    UserWinerAmount[i] = UserWinerAmount[i] + TeamTailsAmount * (UserWinerPercent / 100);
+                    UserWinerPercent = (UserWinerBet[i] * 100) / TeamHeadAmount;
+                    UserWinerAmount[i] = UserWinerBet[i] + TeamTailsAmount * (UserWinerPercent / 100);
                     //
                     UniversalLogic(connection, Sqlcmd, UserWinerTelegramID, UserWinerAmount, i);
                     //Записываем победителей
-                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i]) + "=(" + Convert.ToDouble(UserWinerAmount[i]) + ")"; ;
+                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i]) + "=(" + Convert.ToDouble(UserWinerAmount[i]) + ":" + UserWinerBet[i] + ")";
                     WinnersCounter++;
                     //
 
@@ -130,6 +131,7 @@ namespace YENTEN.Command.Commands.Game
                 //Запись данных проигравших в массивы
                 string[] LosersArray = new string[TeamHeadCount];
                 double[] UserLoserAmount = new double[TeamHeadCount];
+
                 int[] UserLoserTelegramID = new int[TeamHeadCount];
                 counter = 0;
                 connection.Open();
@@ -165,6 +167,7 @@ namespace YENTEN.Command.Commands.Game
             {
                 string[] WinnersArray = new string[TeamTailsCount];
                 double[] UserWinerAmount = new double[TeamTailsCount];
+                double[] UserWinerBet = new double[TeamTailsCount];
                 int[] UserWinerTelegramID = new int[TeamTailsCount];
                 int counter = 0;
 
@@ -175,7 +178,7 @@ namespace YENTEN.Command.Commands.Game
                 while (reader4.Read())
                 {
                     UserWinerTelegramID[counter] = Convert.ToInt32(reader4["TelegramID"]);
-                    UserWinerAmount[counter] = Convert.ToDouble(reader4["AmountYTN"]);
+                    UserWinerBet[counter] = Convert.ToDouble(reader4["AmountYTN"]);
                     counter++;
                 }
                 reader4.Close();
@@ -185,13 +188,14 @@ namespace YENTEN.Command.Commands.Game
                 {
                     //Считаем потенциальный выигрыш
                     double UserWinerPercent;
-                    UserWinerPercent = (UserWinerAmount[i] * 100) / TeamTailsAmount;
-                    UserWinerAmount[i] = UserWinerAmount[i] + TeamHeadAmount * (UserWinerPercent / 100);
+                    
+                    UserWinerPercent = (UserWinerBet[i] * 100) / TeamTailsAmount;
+                    UserWinerAmount[i] = UserWinerBet[i] + TeamHeadAmount * (UserWinerPercent / 100);
                     //
 
                     UniversalLogic(connection, Sqlcmd, UserWinerTelegramID, UserWinerAmount, i);
                     //Записываем победителей
-                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i])+"=("+Convert.ToDouble(UserWinerAmount[i])+")";
+                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i])+"=("+Convert.ToDouble(UserWinerAmount[i])+":"+ UserWinerBet[i]+")";
                     WinnersCounter++;
                     //
                 }

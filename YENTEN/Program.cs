@@ -83,9 +83,9 @@ namespace YENTEN
                   
                 }
             }
-           if (message.ReplyToMessage != null && message.ReplyToMessage.Text == "Вставсте адресс вашего колька." +
+           if (message.ReplyToMessage != null && message.ReplyToMessage.Text == "Вставте адрес вашего кошелька." +
                     "\nAдрес кошелька должен быть похож на это: YnNhhuHjnqpk86fdiXd3SXo5DXozEE4Wxv"
-                    + "\nВ случае неправильного ввода авдресса необходимо обратится к оператору @UtkaZapas")
+                    + "\nВ случае неправильного ввода авдреса необходимо обратится к оператору @UtkaZapas")
            {
                 Registration.StrartReg(message, client);
            }
