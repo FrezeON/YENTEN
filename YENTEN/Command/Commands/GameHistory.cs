@@ -66,7 +66,7 @@ namespace YENTEN.Command.Commands
                         await client.SendTextMessageAsync(message.Chat.Id, "📁Номер игры: " + GameId[i]
                         + "\n📅Дата игры: " + pDate
                         + "\n🛡Победила команда: " + Teams[Team[i]]
-                        + "\n💰Ваш проигрыш: " + matchAmountLoser.Groups[1].Value+"YTN");
+                        + "\n💔Ваш проигрыш: " + matchAmountLoser.Groups[1].Value+"YTN");
                     }
 
                 }
