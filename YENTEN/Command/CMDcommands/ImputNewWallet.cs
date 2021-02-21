@@ -5,6 +5,7 @@ using System.Data.SQLite;
 using System.IO;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using System.Text.RegularExpressions;
 
 namespace YENTEN.Command.CMDcommands
 {
@@ -21,25 +22,16 @@ namespace YENTEN.Command.CMDcommands
             //копируем кошельки из файла
 
             string RawWallets = await System.IO.File.ReadAllTextAsync("newWallets.txt");
-            RawWallets = RawWallets.Replace("\"\",\"", "");
-            RawWallets = RawWallets.Replace("\"", " ");
-            string[] Wallets = RawWallets.Split(new char[] { ' ' });
-            //
-
-            //Вносим кошельки в конец базы
-            connection = new SQLiteConnection("Data Source=MainDB1.db");
-            connection.Open();
-            SQLiteCommand Sqlcmd = connection.CreateCommand();
-                  for (int i=0; i< Wallets.Length; i++)
-                  {
-                    Sqlcmd.CommandText = "INSERT INTO RawWallets VALUES(@Wallet)";
-                    Sqlcmd.Parameters.AddWithValue("@Wallet", Wallets[i]);
-                    Sqlcmd.ExecuteNonQuery();
-                  }
-            Sqlcmd.CommandText = "DELETE FROM RawWallets WHERE ROWID=(SELECT min(ROWID) FROM RawWallets)";
-            Sqlcmd.ExecuteNonQuery();
-            Console.WriteLine("Add  " + (Wallets.Length)+"  Wallets");              
-            connection.Close();
+            Match match = Regex.Match(RawWallets, "\"\",\"(.*?)\"");
+            int Count = 0;
+            while(match.Groups[1].Value != "")
+            {
+                Count++;
+                string queryString = "INSERT INTO RawWallets VALUES('"+ match.Groups[1].Value+"');";
+                DatabaseLibrary.ExecuteNonQuery(queryString);
+                match= match.NextMatch();
+            }
+            Console.WriteLine("Add  " + (Count)+"  Wallets");              
 
             
         }

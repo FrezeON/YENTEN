@@ -9,11 +9,15 @@ namespace YENTEN
     {
         private static SQLiteConnection connection;
 
+        public static void CreateConnection()
+        {
+            connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
+        }
         public  static void ConnectionOpen()
         {
             try
             {
-                connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;");
+                CreateConnection();
                 connection.Open();
             }
             catch (Exception)
@@ -28,10 +32,11 @@ namespace YENTEN
         {
             try
             {
+                CreateConnection();
                 connection.Close();
                 connection.Dispose();
             }
-            catch
+            catch(Exception)
             {
                 string appendText = "Ошибка закрытия базы";
                 Console.WriteLine(DateTime.Now + "  [Log]: " + appendText);
@@ -39,24 +44,58 @@ namespace YENTEN
             }
         }
 
-        public static void CreateCommand(string queryString)
+        public static int  ExecuteScalarInt(string queryString)
+        {
+            CreateConnection();
+            ConnectionOpen();
+            SQLiteCommand Sqlcmd = connection.CreateCommand();
+            Sqlcmd.CommandText = queryString;
+             int result = Convert.ToInt32(Sqlcmd.ExecuteScalar());
+             ConnectionClose();
+            return result;
+        }
+        public static double ExecuteScalarDouble(string queryString)
+        {
+            CreateConnection();
+            ConnectionOpen();
+            SQLiteCommand Sqlcmd = connection.CreateCommand();
+            Sqlcmd.CommandText = queryString;
+            double result = Convert.ToDouble(Sqlcmd.ExecuteScalar());
+            ConnectionClose();
+            return result;
+        }
+        public static string ExecuteScalarString(string queryString)
+        {
+            CreateConnection();
+            ConnectionOpen();
+            SQLiteCommand Sqlcmd = connection.CreateCommand();
+            Sqlcmd.CommandText = queryString;
+            string result = Convert.ToString(Sqlcmd.ExecuteScalar());
+            ConnectionClose();
+            return result;
+        }
+        public static void ExecuteNonQuery(string queryString)
         {
             try
             {
-                DatabaseLibrary.ConnectionOpen();
-                SQLiteCommand Sqlcmd = new SQLiteCommand(queryString);
+                CreateConnection();
+                ConnectionOpen();
+                SQLiteCommand Sqlcmd = connection.CreateCommand();
+                Sqlcmd.CommandText = queryString;
                 Sqlcmd.ExecuteNonQuery();
-
-            }catch(Exception e)
+                ConnectionClose();
+            }
+            catch(Exception e)
             {
-                string appendText = "Ошибка выполнения запроса в базу базу: " +e;
-                Console.WriteLine(DateTime.Now + "  [Log]: " + appendText);
+                string appendText = DateTime.Now + "  [Log]: Ошибка выполнения запроса в базу базу: " + e;
+                Console.WriteLine(appendText);
                 System.IO.File.AppendAllText("log.txt", appendText);
             }
             finally
             {
-                DatabaseLibrary.ConnectionClose();
             }
         }
+
+
     }
 }

@@ -18,24 +18,26 @@ namespace YENTEN.Command.Commands
 
         public override async void Execute(Message message, TelegramBotClient client)
         {
-            
+
             //БД1
             connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
+            string queryString = "SELECT WalletIN FROM UserInfo WHERE TelegramID=" + message.Chat.Id;
+            string WalletIn = DatabaseLibrary.ExecuteScalarString(queryString);
+
+            Sqlcmd.CommandText = "SELECT Ballance, LastAcceted, LastIN FROM BallanceCheck WHERE WalletIN='" + WalletIn + "'";
+            double ballance = 0 ;
+            double LastAcceted = 0 ;
+            int LastIN=0;
             connection.Open();
-            Sqlcmd.CommandText = "SELECT rowid FROM UserInfo WHERE TelegramID = " + message.Chat.Id;
-            int rowid = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "SELECT WalletIN FROM UserInfo WHERE rowid=" + rowid;
-            string WalletIn = Convert.ToString(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "SELECT rowid FROM BallanceCheck WHERE WalletIN = '"+WalletIn+"'";
-            int rowidFromBallance = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "SELECT Ballance FROM BallanceCheck WHERE rowid=" + rowidFromBallance;
-            double ballance = Convert.ToDouble(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "SELECT LastAcceted FROM BallanceCheck WHERE rowid=" + rowidFromBallance;
-            double LastAcceted = Convert.ToDouble(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "SELECT LastIN FROM BallanceCheck WHERE rowid=" + rowidFromBallance;
-            int LastIN = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            connection.Close();
+            SQLiteDataReader reader = Sqlcmd.ExecuteReader();
+                while (reader.Read())
+                {
+                     ballance = Convert.ToDouble(reader["Ballance"]);
+                     LastAcceted = Convert.ToDouble(reader["LastAcceted"]);
+                     LastIN = Convert.ToInt32(reader["LastIN"]);
+            reader.Close();
+            DatabaseLibrary.ConnectionClose();
             //
             try
             {
@@ -43,11 +45,11 @@ namespace YENTEN.Command.Commands
 
                 //Парсер
                 string urlAddress = "http://ytn.ccore.online/ext/getaddress/" + WalletIn;
+                urlAddress= urlAddress.Replace(" ","");
                 string HTML = getResponse(urlAddress);
                 //
                 //Переворот HTML
                 HTML = ReverseString(HTML);
-                //Console.WriteLine(HTML);
                 //
                 Console.WriteLine(DateTime.Now + "  [Log]: Пользователь запросил обновление кошелька: " + WalletIn);
 
@@ -63,6 +65,7 @@ namespace YENTEN.Command.Commands
                     //
                     if (matchTime.Groups[1].Value != "" && Convert.ToInt32(timestamp) > LastIN && Convert.ToDouble(Amount.Replace('.', ',')) > 0)
                     {
+                       
                         LastIN = Convert.ToInt32(timestamp);
                         Console.WriteLine("+" + Convert.ToDouble(Amount.Replace('.', ',')));
                         balanceUpdate += Convert.ToDouble(Amount.Replace('.', ','));
@@ -88,14 +91,17 @@ namespace YENTEN.Command.Commands
                     //
                 }
                 Console.WriteLine("Для кошелька:  " + WalletIn + "   Было добавленно  " + counter + "  записей!!");
-                //Запись нового баланса и метки времени в БД
-                connection.Open();
-                Sqlcmd.CommandText = @"UPDATE BallanceCheck SET Ballance = :Ballance, LastIN = :LastIN, LastAcceted = :LastAcceted WHERE rowid=" + rowidFromBallance;
-                Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Single).Value = balanceUpdate;
-                Sqlcmd.Parameters.Add("LastIN", System.Data.DbType.Int32).Value = LastIN;
-                Sqlcmd.Parameters.Add("LastAcceted", System.Data.DbType.Single).Value = LastAcceted;
-                Sqlcmd.ExecuteNonQuery();
-                connection.Close();
+                if(counter != 0)
+                {
+                    //Запись нового баланса и метки времени в БД
+                    DatabaseLibrary.ConnectionOpen();
+                    Sqlcmd.CommandText = @"UPDATE BallanceCheck SET Ballance = :Ballance, LastIN = :LastIN, LastAcceted = :LastAcceted WHERE WalletIn='" + WalletIn + "'";
+                    Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Single).Value = balanceUpdate;
+                    Sqlcmd.Parameters.Add("LastIN", System.Data.DbType.Int32).Value = LastIN;
+                    Sqlcmd.Parameters.Add("LastAcceted", System.Data.DbType.Single).Value = LastAcceted;
+                    Sqlcmd.ExecuteNonQuery();
+                    DatabaseLibrary.ConnectionClose();
+                }
                 //
                 //Дата последней транзакции
                 DateTime pDate = (new DateTime(1970, 1, 1, 0, 0, 0, 0)).AddSeconds(LastIN);
@@ -136,10 +142,10 @@ namespace YENTEN.Command.Commands
                 await client.SendTextMessageAsync(message.Chat.Id, "Куда дальше?", replyMarkup: markup);
                 //
             }
-            catch(Exception)
+            catch(Exception e )
             {
                 await client.SendTextMessageAsync(message.Chat.Id, "Если видите эту ошибку пишите @UtkaZapas, Код ошибки 0x0001");
-                Console.WriteLine("код ошибки 0x0001");
+                Console.WriteLine("код ошибки 0x0001: "+e);
             }
         }
 
@@ -152,22 +158,22 @@ namespace YENTEN.Command.Commands
 
         public static string getResponse(string uri)
         {
-            StringBuilder sb = new StringBuilder();
-            byte[] buf = new byte[8192];
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-            Stream resStream = response.GetResponseStream();
-            int count = 0;
-            do
-            {
-                count = resStream.Read(buf, 0, buf.Length);
-                if (count != 0)
-                {
-                    sb.Append(Encoding.Default.GetString(buf, 0, count));
-                }
-            }
-            while (count > 0);
-            return sb.ToString();
+
+                Stream receiveStream = response.GetResponseStream();
+                StreamReader readStream = null;
+
+                if (String.IsNullOrWhiteSpace(response.CharacterSet))
+                    readStream = new StreamReader(receiveStream);
+                else
+                    readStream = new StreamReader(receiveStream, Encoding.GetEncoding(response.CharacterSet));
+
+                string data = readStream.ReadToEnd();
+
+                response.Close();
+                readStream.Close();
+                return data;
         }
     }
 }

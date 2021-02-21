@@ -30,15 +30,29 @@ namespace YENTEN.Command.Commands
             Sqlcmd.CommandText = "SELECT GameID, losers, Winners, AllPlayers, GameDate, Team FROM GameHistory WHERE AllPlayers LIKE @TelegramID ORDER BY GameID DESC";
             Sqlcmd.Parameters.AddWithValue("@TelegramID", ("%"+message.Chat.Id+"%"));
             SQLiteDataReader reader = Sqlcmd.ExecuteReader();
-            while (reader.Read() && Counter < 5)
+            try
             {
-                GameId[Counter] = Convert.ToInt32(reader["GameID"]);
-                losers[Counter] = Convert.ToString(reader["losers"]);
-                Winners[Counter] = Convert.ToString(reader["Winners"]);
-                AllPlayers[Counter] = Convert.ToString(reader["AllPlayers"]);
-                GameDate[Counter] = Convert.ToInt32(reader["GameDate"]);
-                Team[Counter] = Convert.ToInt32(reader["Team"]);
-                Counter++;
+
+                while (reader.Read() && Counter < 5)
+                {
+                    GameId[Counter] = Convert.ToInt32(reader["GameID"]);
+                    losers[Counter] = Convert.ToString(reader["losers"]);
+                    Winners[Counter] = Convert.ToString(reader["Winners"]);
+                    AllPlayers[Counter] = Convert.ToString(reader["AllPlayers"]);
+                    GameDate[Counter] = Convert.ToInt32(reader["GameDate"]);
+                    Team[Counter] = Convert.ToInt32(reader["Team"]);
+                    Counter++;
+                }
+            }catch(Exception e)
+            {
+                string appendText = DateTime.Now + "  [Log]: GameHistrory READER ошибка: " + e;
+                Console.WriteLine(appendText);
+                System.IO.File.AppendAllText("log.txt", appendText);
+            }
+            finally
+            {
+                reader.Close();
+                DatabaseLibrary.ConnectionClose();
             }
             reader.Close();
             connection.Close();

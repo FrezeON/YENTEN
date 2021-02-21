@@ -6,7 +6,7 @@ namespace YENTEN
 {
     public static class  Config
     {
-        public static string Token = "1615756231:AAFGBURu-wiShtEBOvreu9MTFgvGkXOpgCU";
+        public static string Token = "1615756231:AAEbVOJKk7QUtk_k4zR-UPbMWk1kjHk4W1M";
     }
 
 }

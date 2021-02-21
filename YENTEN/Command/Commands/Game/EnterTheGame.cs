@@ -11,30 +11,27 @@ namespace YENTEN.Command.Commands.Game
 {
     public class EnterTheGame : Command
     {
-        private static SQLiteConnection connection;
         public override string[] Names { get; set; } = new string[] { "Игра", "Войти в игру" };
 
         public override void Execute(Message message, TelegramBotClient client)
         {
 
-            connection = new SQLiteConnection("Data Source=MainDB1.db");
-            SQLiteCommand Sqlcmd = connection.CreateCommand();
+
             //Подсчет суммы по командам     Количество игроков в командах     Head - орёл Tails- Решка
             double TeamHeadAmount =0;
             double TeamTailsAmount =0;
             int TeamHeadCout = 0;
             int TeamTailsCout = 0;
-            connection.Open();
-            Sqlcmd.CommandText = "SELECT max(rowid) FROM CurrentGame";
-            int maxRowID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "SELECT min(rowid) FROM CurrentGame";
-            int minRowID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
+            string queryString = "SELECT max(rowid) FROM CurrentGame";
+            int maxRowID = DatabaseLibrary.ExecuteScalarInt(queryString);
+            queryString = "SELECT min(rowid) FROM CurrentGame";
+            int minRowID = DatabaseLibrary.ExecuteScalarInt(queryString);
             for (int i = minRowID; i < maxRowID+1; i++)
             {
-                Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE rowid="+i;
-                double Amount = Convert.ToDouble(Sqlcmd.ExecuteScalar());
-                Sqlcmd.CommandText = "SELECT Team FROM CurrentGame WHERE rowid=" + i;
-                int TeamNumber = Convert.ToInt32(Sqlcmd.ExecuteScalar());
+                queryString = "SELECT AmountYTN FROM CurrentGame WHERE rowid="+i;
+                double Amount = DatabaseLibrary.ExecuteScalarDouble(queryString);
+                queryString = "SELECT Team FROM CurrentGame WHERE rowid=" + i;
+                int TeamNumber = DatabaseLibrary.ExecuteScalarInt(queryString) ;
                 //Console.WriteLine(TeamNumber + "      " + Amount);
                 if(TeamNumber == 0)
                 {
@@ -47,7 +44,6 @@ namespace YENTEN.Command.Commands.Game
                     TeamTailsCout++;
                 }
             }
-            connection.Close();
             //
 
             //Процентное соотношение по балансу
@@ -61,25 +57,23 @@ namespace YENTEN.Command.Commands.Game
 
             //       
             //Поиск пользователя в игре
-            connection.Open();
-            Sqlcmd.CommandText = "SELECT COUNT(*) FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
-            int UserExist = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
-            double AmountInCurrentGame = Convert.ToDouble(Sqlcmd.ExecuteScalar());
-            connection.Close();
+            queryString = "SELECT COUNT(*) FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
+            int UserExist = DatabaseLibrary.ExecuteScalarInt(queryString);
+            queryString = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
+            double AmountInCurrentGame = DatabaseLibrary.ExecuteScalarDouble(queryString);
             //
             if(UserExist == 0 || AmountInCurrentGame ==0)
             {
-                UserDoesNotExistAction(message, client, connection, Sqlcmd, TeamHeadAmount, TeamTailsAmount, TeamHeadCout, TeamTailsCout, TeamHeadPercent, TeamTailsPercent);
+                UserDoesNotExistAction(message, client, TeamHeadAmount, TeamTailsAmount, TeamHeadCout, TeamTailsCout, TeamHeadPercent, TeamTailsPercent);
             }
             else
             {
-                UserExistAction(message, client, TeamHeadCout, TeamTailsCout, TeamHeadAmount, TeamTailsAmount, TeamHeadPercent, TeamTailsPercent, Sqlcmd);
+                UserExistAction(message, client, TeamHeadCout, TeamTailsCout, TeamHeadAmount, TeamTailsAmount, TeamHeadPercent, TeamTailsPercent );
             }
             
         }
         public async void UserExistAction(Message message, TelegramBotClient client, int TeamHeadCout, int TeamTailsCout, double TeamHeadAmount,
-            double TeamTailsAmount, double TeamHeadPercent, double TeamTailsPercent, SQLiteCommand Sqlcmd)
+            double TeamTailsAmount, double TeamHeadPercent, double TeamTailsPercent)
         {
             //Клавиатура с выбором команды
             var markup = new ReplyKeyboardMarkup();
@@ -99,12 +93,10 @@ namespace YENTEN.Command.Commands.Game
             await client.SendTextMessageAsync(message.Chat.Id, "Куда дальше?", replyMarkup: markup);
             //
             //Берем данные пользователя
-            connection.Open();
-            Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
-            double UserAmount = Convert.ToDouble(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "SELECT Team FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
-            int UserTeamNumber = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            connection.Close();
+           string queryString = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
+            double UserAmount = DatabaseLibrary.ExecuteScalarDouble(queryString);
+            queryString = "SELECT Team FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
+            int UserTeamNumber = DatabaseLibrary.ExecuteScalarInt(queryString);
             string[] Teams = { "💿Орёл", "📀Решка" };
             //
             //Считаем потенциальный выигрыш
@@ -137,10 +129,8 @@ namespace YENTEN.Command.Commands.Game
             }
             else if (TeamHeadCout >= 1 && TeamTailsCout >= 1)
             {
-                connection.Open();
-                Sqlcmd.CommandText = "SELECT GameTime FROM NextGameTime WHERE GameTime !=0";
-                string StartTime = Convert.ToString(Sqlcmd.ExecuteScalar());
-                connection.Close();
+                queryString = "SELECT GameTime FROM NextGameTime WHERE GameTime !=0";
+                string StartTime = DatabaseLibrary.ExecuteScalarString(queryString);
 
                 await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
                      + "\n💿Орёл: " + (TeamHeadCout) + "  vs  📀Решка: " + TeamTailsCout
@@ -151,7 +141,7 @@ namespace YENTEN.Command.Commands.Game
                      + "\nСтавка: " + UserAmount + "YTN"
                      + "\nВаш вклад в команду: " + Math.Round(UserPercent, 2) + "%"
                      + "\nПотенциальный выигрыш: " + UserWinAmount + "YTN"
-                     + "\n⏰Раунд закончится: " + StartTime);
+                     + "\n⏰Раунд закончится: " + StartTime +" МСК");
             }
             else
             {
@@ -169,7 +159,7 @@ namespace YENTEN.Command.Commands.Game
             await client.SendTextMessageAsync(message.Chat.Id, "Что дальше?", replyMarkup: markup);
         }
 
-        public async void UserDoesNotExistAction(Message message, TelegramBotClient client, SQLiteConnection connection, SQLiteCommand Sqlcmd,
+        public async void UserDoesNotExistAction(Message message, TelegramBotClient client,
             double TeamHeadAmount, double TeamTailsAmount, int TeamHeadCout, int TeamTailsCout, double TeamHeadPercent, double TeamTailsPercent)
         {
             //Клавиатура с выбором команды
@@ -198,17 +188,15 @@ namespace YENTEN.Command.Commands.Game
             }
             else if (TeamHeadCout>=1&& TeamTailsCout >=1)
             {
-                connection.Open();
-                Sqlcmd.CommandText = "SELECT GameTime FROM NextGameTime WHERE GameTime !=0";
-                string StartTime = Convert.ToString(Sqlcmd.ExecuteScalar());
-                connection.Close();
+                string queryString = "SELECT GameTime FROM NextGameTime WHERE GameTime !=0";
+                string StartTime = DatabaseLibrary.ExecuteScalarString(queryString);
 
                 await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
                 + "\n💿Орёл: " + TeamHeadCout + "  vs  📀Решка: " + TeamTailsCout
                 + "\nКоличество монет по командам:"
                 + "\n💿Орёл: " + TeamHeadAmount + "YTN  vs  📀Решка: " + TeamTailsAmount
                 + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
-                + "\n⏰Раунд закончится: " + StartTime);
+                + "\n⏰Раунд закончится: " + StartTime+" МСК");
             }
             else
             {

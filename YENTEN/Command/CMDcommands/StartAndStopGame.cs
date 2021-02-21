@@ -26,7 +26,7 @@ namespace YENTEN.Command.CMDcommands
                 Sqlcmd.CommandText = "DELETE FROM NextGameTime";
                 Sqlcmd.ExecuteNonQuery();
                 Sqlcmd.CommandText = "INSERT INTO NextGameTime VALUES(@GameTime)";
-                Sqlcmd.Parameters.AddWithValue("@GameTime", Convert.ToString(DateTime.Now.AddMinutes(5).ToShortTimeString()));
+                Sqlcmd.Parameters.AddWithValue("@GameTime", Convert.ToString(DateTime.Now.AddMinutes(5).AddHours(1).ToShortTimeString()));
                 Sqlcmd.ExecuteNonQuery();
                 connection.Close();
                 StartGameCheck();
@@ -67,7 +67,7 @@ namespace YENTEN.Command.CMDcommands
                 Sqlcmd.CommandText = "DELETE FROM NextGameTime";
                 Sqlcmd.ExecuteNonQuery();
                 Sqlcmd.CommandText = "INSERT INTO NextGameTime VALUES(@GameTime)";
-                Sqlcmd.Parameters.AddWithValue("@GameTime", Convert.ToString(DateTime.Now.AddMinutes(5).ToShortTimeString()));
+                Sqlcmd.Parameters.AddWithValue("@GameTime", Convert.ToString(DateTime.Now.AddMinutes(5).AddHours(1).ToShortTimeString()));
                 Sqlcmd.ExecuteNonQuery();
                 connection.Close();
                 GameStartTimer = new System.Timers.Timer(300000);
