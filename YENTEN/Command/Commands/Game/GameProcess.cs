@@ -7,6 +7,7 @@ using System.Timers;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using System.Linq;
+using YENTEN.Command.CMDcommands;
 
 namespace YENTEN.Command.Commands.Game
 {
@@ -22,47 +23,37 @@ namespace YENTEN.Command.Commands.Game
         }
         public static void Run(Object source, ElapsedEventArgs e)
         {
-             connection = new SQLiteConnection("Data Source=MainDB1.db");
+            StartAndStopGame.GameStartTimer.Stop();
+            StartAndStopGame.GameStartTimer.Dispose();
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             connection.Open();
+            //Очистка от мусор
             Sqlcmd.CommandText = "DELETE FROM CurrentGame WHERE  AmountYTN=0";
             Sqlcmd.ExecuteNonQuery();
+
+            //Количество участников
             Sqlcmd.CommandText = "SELECT COUNT(*) FROM CurrentGame WHERE Team = 0";
             int TeamHeadCount = Convert.ToInt32(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = "SELECT COUNT(*) FROM CurrentGame WHERE Team = 1";
             int TeamTailsCount = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            //Запись времени
-            Sqlcmd.CommandText = "DELETE FROM NextGameTime";
+            connection.Close();
+            //
+            //Запуск игры
+
+            GameLogic(connection, Sqlcmd, TeamHeadCount, TeamTailsCount);
+            //
+            //Создание новой игры
+            connection.Open();
+            Sqlcmd.CommandText ="DELETE FROM CurrentGame";
             Sqlcmd.ExecuteNonQuery();
-            Sqlcmd.CommandText = "INSERT INTO NextGameTime VALUES(@GameTime)";
-            Sqlcmd.Parameters.AddWithValue("@GameTime", Convert.ToString(DateTime.Now.AddMinutes(5).ToShortDateString()));
+            Sqlcmd.CommandText = "INSERT INTO CurrentGame VALUES(@TelegramID, @AmountYTN,@Team)";
+            Sqlcmd.Parameters.AddWithValue("@TelegramID", 0);
+            Sqlcmd.Parameters.AddWithValue("@AmountYTN", 0);
+            Sqlcmd.Parameters.AddWithValue("@Team", 0);
             Sqlcmd.ExecuteNonQuery();
             connection.Close();
             //
-            if (TeamHeadCount != 0 && TeamTailsCount != 0)
-            {
-                GameLogic(connection, Sqlcmd, TeamHeadCount, TeamTailsCount);
-                connection.Open();
-                Sqlcmd.CommandText ="DELETE FROM CurrentGame";
-                Sqlcmd.ExecuteNonQuery();
-                Sqlcmd.CommandText = "INSERT INTO CurrentGame VALUES(@TelegramID, @AmountYTN,@Team)";
-                Sqlcmd.Parameters.AddWithValue("@TelegramID", 0);
-                Sqlcmd.Parameters.AddWithValue("@AmountYTN", 0);
-                Sqlcmd.Parameters.AddWithValue("@Team", 0);
-                Sqlcmd.ExecuteNonQuery();
-                connection.Close();
-            }
-            else if( TeamHeadCount ==0 && TeamTailsCount ==0)
-            {
-                connection.Open();
-                Sqlcmd.CommandText = "INSERT INTO CurrentGame VALUES(@TelegramID, @AmountYTN,@Team)";
-                Sqlcmd.Parameters.AddWithValue("@TelegramID", 0);
-                Sqlcmd.Parameters.AddWithValue("@AmountYTN", 0);
-                Sqlcmd.Parameters.AddWithValue("@Team", 0);
-                Sqlcmd.ExecuteNonQuery();
-                connection.Close();
-            }
-
         }
 
         private static void GameLogic(SQLiteConnection connection, SQLiteCommand Sqlcmd, int TeamHeadCount, int TeamTailsCount)
@@ -71,7 +62,6 @@ namespace YENTEN.Command.Commands.Game
             string urlAddress = "https://www.random.org/integers/?num=1&min=0&max=1&col=1&base=10&format=plain&rnd=new";
             int TeamWinID =Convert.ToInt32(BallanceCheck.getResponse(urlAddress));
             //
-
             //Подсчет суммы по командам     Количество игроков в командах     Head - орёл Tails- Решка
             double TeamHeadAmount = 0;
             double TeamTailsAmount = 0;
@@ -238,7 +228,6 @@ namespace YENTEN.Command.Commands.Game
                 RecordToHistory(connection, Sqlcmd, Losers, Winners, TeamWinID, AllPlayers) ;
                 //
             }
-
             //Добавляем в лог запись игры и выводим в консоль
             connection.Open();
             Sqlcmd.CommandText = "SELECT max(GameID) FROM GameHistory";
@@ -254,7 +243,9 @@ namespace YENTEN.Command.Commands.Game
             System.IO.File.AppendAllText("log.txt", appendText);
             Console.WriteLine(appendText);
             //
-
+            //Запуск таймера
+            StartAndStopGame.StartGameCheck();
+            //
         }
 
         private static void UniversalLogic(SQLiteConnection connection, SQLiteCommand Sqlcmd, int[] UserWinerTelegramID, double[] UserWinerAmount, int i)
