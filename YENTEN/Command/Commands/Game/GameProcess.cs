@@ -63,8 +63,8 @@ namespace YENTEN.Command.Commands.Game
             int TeamWinID =Convert.ToInt32(BallanceCheck.getResponse(urlAddress));
             //
             //Подсчет суммы по командам     Количество игроков в командах     Head - орёл Tails- Решка
-            double TeamHeadAmount = 0;
-            double TeamTailsAmount = 0;
+            decimal TeamHeadAmount = 0;
+            decimal TeamTailsAmount = 0;
             connection.Open();
             Sqlcmd.CommandText = "SELECT max(rowid) FROM CurrentGame";
             int maxRowID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
@@ -73,7 +73,7 @@ namespace YENTEN.Command.Commands.Game
             for (int i = minRowID; i <= maxRowID; i++)
             {
                 Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE rowid=" + i;
-                double Amount = Convert.ToDouble(Sqlcmd.ExecuteScalar());
+                decimal Amount = Convert.ToDecimal(Sqlcmd.ExecuteScalar());
                 Sqlcmd.CommandText = "SELECT Team FROM CurrentGame WHERE rowid=" + i;
                 int TeamNumber = Convert.ToInt32(Sqlcmd.ExecuteScalar());
                 if (TeamNumber == 0)
@@ -91,8 +91,8 @@ namespace YENTEN.Command.Commands.Game
             if (TeamWinID == 0)
             {
                 string[] WinnersArray = new string[TeamHeadCount];
-                double[] UserWinerAmount = new double[TeamHeadCount];
-                double[] UserWinerBet = new double[TeamHeadCount];
+                decimal[] UserWinerAmount = new decimal[TeamHeadCount];
+                decimal[] UserWinerBet = new decimal[TeamHeadCount];
                 int[] UserWinerTelegramID = new int[TeamHeadCount];
                 int counter = 0;
                 //
@@ -102,7 +102,7 @@ namespace YENTEN.Command.Commands.Game
                 while (reader.Read())
                 {
                     UserWinerTelegramID[counter] = Convert.ToInt32(reader["TelegramID"]);
-                    UserWinerBet[counter] = Convert.ToDouble(reader["AmountYTN"]);
+                    UserWinerBet[counter] = Convert.ToDecimal(reader["AmountYTN"]);
                     counter++;
                 }
                 reader.Close();
@@ -111,20 +111,20 @@ namespace YENTEN.Command.Commands.Game
                 for (int i = 0; i < TeamHeadCount; i++)
                 {
                     //Считаем  выигрыш
-                    double UserWinerPercent;
+                    decimal UserWinerPercent;
                     UserWinerPercent = (UserWinerBet[i] * 100) / TeamHeadAmount;
                     UserWinerAmount[i] = UserWinerBet[i] + TeamTailsAmount * (UserWinerPercent / 100);
                     //
                     UniversalLogic(connection, Sqlcmd, UserWinerTelegramID, UserWinerAmount, i);
                     //Записываем победителей
-                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i]) + "=(" + Convert.ToDouble(UserWinerAmount[i]) + ":" + UserWinerBet[i] + ")";
+                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i]) + "=(" + Convert.ToDecimal(UserWinerAmount[i]) + ":" + UserWinerBet[i] + ")";
                     WinnersCounter++;
                     //
 
                 }
                 //Запись данных проигравших в массивы
                 string[] LosersArray = new string[TeamHeadCount];
-                double[] UserLoserAmount = new double[TeamHeadCount];
+                decimal[] UserLoserAmount = new decimal[TeamHeadCount];
 
                 int[] UserLoserTelegramID = new int[TeamHeadCount];
                 counter = 0;
@@ -134,7 +134,7 @@ namespace YENTEN.Command.Commands.Game
                 while (reader2.Read())
                 {
                     UserLoserTelegramID[counter] = Convert.ToInt32(reader2["TelegramID"]);
-                    UserLoserAmount[counter] = Convert.ToDouble(reader2["AmountYTN"]);
+                    UserLoserAmount[counter] = Convert.ToDecimal(reader2["AmountYTN"]);
                     counter++;
                 }
                 reader2.Close();
@@ -143,7 +143,7 @@ namespace YENTEN.Command.Commands.Game
                 for (int i = 0; i < TeamTailsCount; i++)
                 {
                     //Записываем проигравших
-                    LosersArray[LoserCounter] = Convert.ToString(UserLoserTelegramID[i]) + "=(" + Convert.ToDouble(UserLoserAmount[i]) + ")";
+                    LosersArray[LoserCounter] = Convert.ToString(UserLoserTelegramID[i]) + "=(" + Convert.ToDecimal(UserLoserAmount[i]) + ")";
                     LoserCounter++;
                     //
                 }
@@ -160,8 +160,8 @@ namespace YENTEN.Command.Commands.Game
             else
             {
                 string[] WinnersArray = new string[TeamTailsCount];
-                double[] UserWinerAmount = new double[TeamTailsCount];
-                double[] UserWinerBet = new double[TeamTailsCount];
+                decimal[] UserWinerAmount = new decimal[TeamTailsCount];
+                decimal[] UserWinerBet = new decimal[TeamTailsCount];
                 int[] UserWinerTelegramID = new int[TeamTailsCount];
                 int counter = 0;
 
@@ -172,7 +172,7 @@ namespace YENTEN.Command.Commands.Game
                 while (reader4.Read())
                 {
                     UserWinerTelegramID[counter] = Convert.ToInt32(reader4["TelegramID"]);
-                    UserWinerBet[counter] = Convert.ToDouble(reader4["AmountYTN"]);
+                    UserWinerBet[counter] = Convert.ToDecimal(reader4["AmountYTN"]);
                     counter++;
                 }
                 reader4.Close();
@@ -181,7 +181,7 @@ namespace YENTEN.Command.Commands.Game
                 for (int i = 0; i < TeamTailsCount; i++)
                 {
                     //Считаем потенциальный выигрыш
-                    double UserWinerPercent;
+                    decimal UserWinerPercent;
                     
                     UserWinerPercent = (UserWinerBet[i] * 100) / TeamTailsAmount;
                     UserWinerAmount[i] = UserWinerBet[i] + TeamHeadAmount * (UserWinerPercent / 100);
@@ -189,13 +189,13 @@ namespace YENTEN.Command.Commands.Game
 
                     UniversalLogic(connection, Sqlcmd, UserWinerTelegramID, UserWinerAmount, i);
                     //Записываем победителей
-                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i])+"=("+Convert.ToDouble(UserWinerAmount[i])+":"+ UserWinerBet[i]+")";
+                    WinnersArray[WinnersCounter] = Convert.ToString(UserWinerTelegramID[i])+"=("+Convert.ToDecimal(UserWinerAmount[i])+":"+ UserWinerBet[i]+")";
                     WinnersCounter++;
                     //
                 }
                 //Запись данных проигравших в массивы
                 string[] LosersArray = new string[TeamHeadCount];
-                double[] UserLoserAmount = new double[TeamHeadCount];
+                decimal[] UserLoserAmount = new decimal[TeamHeadCount];
                 int[] UserLoserTelegramID = new int[TeamHeadCount];
                 counter = 0;
                 connection.Open();
@@ -204,7 +204,7 @@ namespace YENTEN.Command.Commands.Game
                 while (reader3.Read())
                 {
                     UserLoserTelegramID[counter] = Convert.ToInt32(reader3["TelegramID"]);
-                    UserLoserAmount[counter] = Convert.ToDouble(reader3["AmountYTN"]);
+                    UserLoserAmount[counter] = Convert.ToDecimal(reader3["AmountYTN"]);
                     counter++;
                 }
                 reader3.Close();
@@ -213,7 +213,7 @@ namespace YENTEN.Command.Commands.Game
                 for (int i = 0; i < TeamHeadCount; i++)
                 {
                     //Записываем проигравших
-                    LosersArray[LoserCounter] = Convert.ToString(UserLoserTelegramID[i]) + "=(" + Convert.ToDouble(UserLoserAmount[i]) + ")";
+                    LosersArray[LoserCounter] = Convert.ToString(UserLoserTelegramID[i]) + "=(" + Convert.ToDecimal(UserLoserAmount[i]) + ")";
                     LoserCounter++;
                     //
                 }
@@ -248,16 +248,16 @@ namespace YENTEN.Command.Commands.Game
             //
         }
 
-        private static void UniversalLogic(SQLiteConnection connection, SQLiteCommand Sqlcmd, int[] UserWinerTelegramID, double[] UserWinerAmount, int i)
+        private static void UniversalLogic(SQLiteConnection connection, SQLiteCommand Sqlcmd, int[] UserWinerTelegramID, decimal[] UserWinerAmount, int i)
         {
             //Добавляем выигрыш на счет
             connection.Open();
             Sqlcmd.CommandText = "SELECT WalletIN FROM UserInfo WHERE TelegramID=" + UserWinerTelegramID[i];
             string UserWinerWalletIN = Convert.ToString(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = "SELECT Ballance FROM BallanceCheck WHERE WalletIN=" + "'" + UserWinerWalletIN + "'";
-            double UserWinerBallance = Convert.ToDouble(Sqlcmd.ExecuteScalar());
+            decimal UserWinerBallance = Convert.ToDecimal(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = @"UPDATE BallanceCheck SET Ballance = :Ballance WHERE WalletIN=" + "'" + UserWinerWalletIN + "'";
-            Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Single).Value = UserWinerBallance + UserWinerAmount[i];
+            Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Decimal).Value = UserWinerBallance + UserWinerAmount[i];
             Sqlcmd.ExecuteNonQuery();
             connection.Close();
             //

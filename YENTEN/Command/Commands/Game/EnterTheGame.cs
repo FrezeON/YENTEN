@@ -18,8 +18,8 @@ namespace YENTEN.Command.Commands.Game
 
 
             //Подсчет суммы по командам     Количество игроков в командах     Head - орёл Tails- Решка
-            double TeamHeadAmount =0;
-            double TeamTailsAmount =0;
+            decimal TeamHeadAmount =0;
+            decimal TeamTailsAmount =0;
             int TeamHeadCout = 0;
             int TeamTailsCout = 0;
             string queryString = "SELECT max(rowid) FROM CurrentGame";
@@ -29,7 +29,7 @@ namespace YENTEN.Command.Commands.Game
             for (int i = minRowID; i < maxRowID+1; i++)
             {
                 queryString = "SELECT AmountYTN FROM CurrentGame WHERE rowid="+i;
-                double Amount = DatabaseLibrary.ExecuteScalarDouble(queryString);
+                decimal Amount = DatabaseLibrary.ExecuteScalarDecimal(queryString);
                 queryString = "SELECT Team FROM CurrentGame WHERE rowid=" + i;
                 int TeamNumber = DatabaseLibrary.ExecuteScalarInt(queryString) ;
                 //Console.WriteLine(TeamNumber + "      " + Amount);
@@ -47,8 +47,8 @@ namespace YENTEN.Command.Commands.Game
             //
 
             //Процентное соотношение по балансу
-            double TeamHeadPercent = 0;
-            double TeamTailsPercent = 0;
+            decimal TeamHeadPercent = 0;
+            decimal TeamTailsPercent = 0;
             if (TeamHeadAmount != 0)
             {
                  TeamHeadPercent = Math.Round((TeamHeadAmount * 100) / (TeamHeadAmount + TeamTailsAmount), 2);
@@ -60,7 +60,7 @@ namespace YENTEN.Command.Commands.Game
             queryString = "SELECT COUNT(*) FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
             int UserExist = DatabaseLibrary.ExecuteScalarInt(queryString);
             queryString = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
-            double AmountInCurrentGame = DatabaseLibrary.ExecuteScalarDouble(queryString);
+            decimal AmountInCurrentGame = DatabaseLibrary.ExecuteScalarDecimal(queryString);
             //
             if(UserExist == 0 || AmountInCurrentGame ==0)
             {
@@ -72,8 +72,8 @@ namespace YENTEN.Command.Commands.Game
             }
             
         }
-        public async void UserExistAction(Message message, TelegramBotClient client, int TeamHeadCout, int TeamTailsCout, double TeamHeadAmount,
-            double TeamTailsAmount, double TeamHeadPercent, double TeamTailsPercent)
+        public async void UserExistAction(Message message, TelegramBotClient client, int TeamHeadCout, int TeamTailsCout, decimal TeamHeadAmount,
+            decimal TeamTailsAmount, decimal TeamHeadPercent, decimal TeamTailsPercent)
         {
             //Клавиатура с выбором команды
             var markup = new ReplyKeyboardMarkup();
@@ -93,15 +93,15 @@ namespace YENTEN.Command.Commands.Game
             await client.SendTextMessageAsync(message.Chat.Id, "Куда дальше?", replyMarkup: markup);
             //
             //Берем данные пользователя
-           string queryString = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
-            double UserAmount = DatabaseLibrary.ExecuteScalarDouble(queryString);
+            string queryString = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
+            decimal UserAmount = DatabaseLibrary.ExecuteScalarDecimal(queryString);
             queryString = "SELECT Team FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
             int UserTeamNumber = DatabaseLibrary.ExecuteScalarInt(queryString);
             string[] Teams = { "💿Орёл", "📀Решка" };
             //
             //Считаем потенциальный выигрыш
-            double UserWinAmount;
-            double UserPercent;
+            decimal UserWinAmount;
+            decimal UserPercent;
             //Разные действия  зависимости от статуса пользователя в этой игре
             if (UserTeamNumber == 0)
             {
@@ -160,7 +160,7 @@ namespace YENTEN.Command.Commands.Game
         }
 
         public async void UserDoesNotExistAction(Message message, TelegramBotClient client,
-            double TeamHeadAmount, double TeamTailsAmount, int TeamHeadCout, int TeamTailsCout, double TeamHeadPercent, double TeamTailsPercent)
+            decimal TeamHeadAmount, decimal TeamTailsAmount, int TeamHeadCout, int TeamTailsCout, decimal TeamHeadPercent, decimal TeamTailsPercent)
         {
             //Клавиатура с выбором команды
             var markup = new ReplyKeyboardMarkup();

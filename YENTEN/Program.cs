@@ -43,17 +43,28 @@ namespace YENTEN
             commandsCMD.Add(new StartAndStopGame());
             commandsCMD.Add(new SendNotif());
             // Cписок команд заканчивается здесь(для консоли)
-            SetTimer();
-            client.StartReceiving();
-            client.OnMessage += OnMessageHandler;
-            Console.WriteLine(DateTime.Now+ "  [Log]: Bot started");
-            for (; ;)
+            try
             {
-                    OnConsoleHandler();
+
+                SetTimer();
+                client.StartReceiving();
+                client.OnMessage += OnMessageHandler;
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red; Console.WriteLine(DateTime.Now + "  [Log]: Ошибка OnMessageHandler: " + e);
+                Console.ForegroundColor = ConsoleColor.White;
+                System.IO.File.AppendAllText("log.txt", (DateTime.Now + "  [Log]: Ошибка OnMessageHandler: " + e));
             }
             
+            Console.WriteLine(DateTime.Now + "  [Log]: Bot started");
+            for (; ; )
+            {
+               OnConsoleHandler();
+            }
 
         }
+
         private static void OnConsoleHandler()
         {
             string commandText = Console.ReadLine();

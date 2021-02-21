@@ -32,7 +32,7 @@ namespace YENTEN
         {
             try
             {
-                CreateConnection();
+                connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
                 connection.Close();
                 connection.Dispose();
             }
@@ -46,7 +46,7 @@ namespace YENTEN
 
         public static int  ExecuteScalarInt(string queryString)
         {
-            CreateConnection();
+            connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
             ConnectionOpen();
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             Sqlcmd.CommandText = queryString;
@@ -54,19 +54,19 @@ namespace YENTEN
              ConnectionClose();
             return result;
         }
-        public static double ExecuteScalarDouble(string queryString)
+        public static decimal ExecuteScalarDecimal(string queryString)
         {
-            CreateConnection();
+            connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
             ConnectionOpen();
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             Sqlcmd.CommandText = queryString;
-            double result = Convert.ToDouble(Sqlcmd.ExecuteScalar());
+            decimal result = Convert.ToDecimal(Sqlcmd.ExecuteScalar());
             ConnectionClose();
             return result;
         }
         public static string ExecuteScalarString(string queryString)
         {
-            CreateConnection();
+            connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
             ConnectionOpen();
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             Sqlcmd.CommandText = queryString;
@@ -78,7 +78,7 @@ namespace YENTEN
         {
             try
             {
-                CreateConnection();
+                connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
                 ConnectionOpen();
                 SQLiteCommand Sqlcmd = connection.CreateCommand();
                 Sqlcmd.CommandText = queryString;

@@ -25,7 +25,7 @@ namespace YENTEN.Command.Commands
             Sqlcmd.CommandText = "SELECT WalletIN FROM UserInfo WHERE TelegramID=" + message.Chat.Id;
             string WalletIn = Convert.ToString(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = "SELECT Ballance FROM BallanceCheck WHERE WalletIN=" + "'" + WalletIn + "'";
-            double Ballance = Convert.ToDouble(Sqlcmd.ExecuteScalar());
+            decimal Ballance = Convert.ToDecimal(Sqlcmd.ExecuteScalar());
             connection.Close();
 
             await client.SendTextMessageAsync(message.Chat.Id, "Ваш баланс: " + Ballance+"YTN"
@@ -50,21 +50,21 @@ namespace YENTEN.Command.Commands
                 connection = new SQLiteConnection("Data Source=MainDB1.db");
                 SQLiteCommand Sqlcmd = connection.CreateCommand();
                 string UserMessage = message.Text.Replace(".", ",");
-                double AmountWinthdraw = Convert.ToDouble(UserMessage);
+                decimal AmountWinthdraw = Convert.ToDecimal(UserMessage);
                 connection.Open();
                 Sqlcmd.CommandText = "SELECT WalletIN FROM UserInfo WHERE TelegramID=" + message.Chat.Id;
                 string WalletIn = Convert.ToString(Sqlcmd.ExecuteScalar());
                 Sqlcmd.CommandText = "SELECT UserWallet FROM UserInfo WHERE TelegramID=" + message.Chat.Id;
                 string UserWallet = Convert.ToString(Sqlcmd.ExecuteScalar());
                 Sqlcmd.CommandText = "SELECT Ballance FROM BallanceCheck WHERE WalletIN=" + "'" + WalletIn + "'";
-                double Ballance = Convert.ToDouble(Sqlcmd.ExecuteScalar());
+                decimal Ballance = Convert.ToDecimal(Sqlcmd.ExecuteScalar());
                 connection.Close();
 
                 if (AmountWinthdraw <= Ballance && AmountWinthdraw > 30)
                 {
                     connection.Open();
-                    double AmountWinthdrawMinusСommission = AmountWinthdraw * 95 / 100;
-                    double Сommission = AmountWinthdraw - AmountWinthdrawMinusСommission;
+                    decimal AmountWinthdrawMinusСommission = AmountWinthdraw * 95 / 100;
+                    decimal Сommission = AmountWinthdraw - AmountWinthdrawMinusСommission;
                     //Создаем заявку
                     Sqlcmd.CommandText = "INSERT INTO WithdrawFunds VALUES(@TelegramID, @UserWallet, @AmountWinthdraw, @Сommission)";
                     Sqlcmd.Parameters.AddWithValue("@TelegramID", message.From.Id);
@@ -74,7 +74,7 @@ namespace YENTEN.Command.Commands
                     Sqlcmd.ExecuteNonQuery();
                     //Обновляем баланс
                     Sqlcmd.CommandText = @"UPDATE BallanceCheck SET Ballance = :Ballance WHERE WalletIN=" + "'" + WalletIn + "'";
-                    Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Double).Value = Ballance - AmountWinthdraw;
+                    Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Decimal).Value = Ballance - AmountWinthdraw;
                     Sqlcmd.ExecuteNonQuery();
 
                     connection.Close();
