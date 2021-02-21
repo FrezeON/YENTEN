@@ -21,12 +21,11 @@ namespace YENTEN.Command.CMDcommands
             {
                 connection = new SQLiteConnection("Data Source=MainDB1.db");
                 SQLiteCommand Sqlcmd = connection.CreateCommand();
-                string TimeStart =  DateTime.Now.ToString("HH") + ":" + Convert.ToString(DateTime.Now.Minute + 5);
                 connection.Open();
                 Sqlcmd.CommandText = "DELETE FROM NextGameTime";
                 Sqlcmd.ExecuteNonQuery();
                 Sqlcmd.CommandText = "INSERT INTO NextGameTime VALUES(@GameTime)";
-                Sqlcmd.Parameters.AddWithValue("@GameTime",TimeStart);
+                Sqlcmd.Parameters.AddWithValue("@GameTime", Convert.ToString(DateTime.Now.AddMinutes(5).ToShortDateString()));
                 Sqlcmd.ExecuteNonQuery();
                 connection.Close();
                 SetTimer();

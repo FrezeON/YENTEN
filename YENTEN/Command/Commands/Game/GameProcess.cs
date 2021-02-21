@@ -32,11 +32,10 @@ namespace YENTEN.Command.Commands.Game
             Sqlcmd.CommandText = "SELECT COUNT(*) FROM CurrentGame WHERE Team = 1";
             int TeamTailsCount = Convert.ToInt32(Sqlcmd.ExecuteScalar());
             //Запись времени
-            string TimeStart = DateTime.Now.ToString("HH") + ":" + Convert.ToString(DateTime.Now.Minute + 5);
             Sqlcmd.CommandText = "DELETE FROM NextGameTime";
             Sqlcmd.ExecuteNonQuery();
             Sqlcmd.CommandText = "INSERT INTO NextGameTime VALUES(@GameTime)";
-            Sqlcmd.Parameters.AddWithValue("@GameTime", TimeStart);
+            Sqlcmd.Parameters.AddWithValue("@GameTime", Convert.ToString(DateTime.Now.AddMinutes(5).ToShortDateString()));
             Sqlcmd.ExecuteNonQuery();
             connection.Close();
             //
