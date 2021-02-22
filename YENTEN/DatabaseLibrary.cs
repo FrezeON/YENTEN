@@ -9,15 +9,12 @@ namespace YENTEN
     {
         private static SQLiteConnection connection;
 
-        public static void CreateConnection()
-        {
-            connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
-        }
+
         public  static void ConnectionOpen()
         {
             try
             {
-                CreateConnection();
+                connection = new SQLiteConnection("Data Source=MainDB1.db");
                 connection.Open();
             }
             catch (Exception)
@@ -32,7 +29,7 @@ namespace YENTEN
         {
             try
             {
-                connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
+                connection = new SQLiteConnection("Data Source=MainDB1.db");
                 connection.Close();
                 connection.Dispose();
             }
@@ -46,7 +43,7 @@ namespace YENTEN
 
         public static int  ExecuteScalarInt(string queryString)
         {
-            connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             ConnectionOpen();
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             Sqlcmd.CommandText = queryString;
@@ -56,7 +53,7 @@ namespace YENTEN
         }
         public static decimal ExecuteScalarDecimal(string queryString)
         {
-            connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             ConnectionOpen();
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             Sqlcmd.CommandText = queryString;
@@ -66,7 +63,7 @@ namespace YENTEN
         }
         public static string ExecuteScalarString(string queryString)
         {
-            connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
             ConnectionOpen();
             SQLiteCommand Sqlcmd = connection.CreateCommand();
             Sqlcmd.CommandText = queryString;
@@ -78,7 +75,7 @@ namespace YENTEN
         {
             try
             {
-                connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
+                connection = new SQLiteConnection("Data Source=MainDB1.db");
                 ConnectionOpen();
                 SQLiteCommand Sqlcmd = connection.CreateCommand();
                 Sqlcmd.CommandText = queryString;
