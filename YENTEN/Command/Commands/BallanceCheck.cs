@@ -105,7 +105,7 @@ namespace YENTEN.Command.Commands
                 }
                 //
                 //Дата последней транзакции
-                DateTime pDate = (new DateTime(1970, 1, 1, 0, 0, 0, 0)).AddSeconds(LastIN);
+                DateTime pDate = (new DateTime(1970, 1, 1, 0, 0, 0, 0)).AddSeconds(LastIN).AddHours(3);
                 //
                 //Сообщение пользователю
                 if (pDate == new DateTime(1970, 1, 1, 0, 0, 0, 0))
@@ -119,7 +119,7 @@ namespace YENTEN.Command.Commands
 
 
                     await client.SendTextMessageAsync(message.Chat.Id, "💸Ваш баланс " + balanceUpdate + "YTN"
-                        + "\n📆Дата последней записанной транзакции: " + pDate
+                        + "\n📆Дата последней записанной транзакции: " + pDate+" МСК"
                         + "\n📨Количество монет в последней транзакции: " + LastAcceted);
                 }
                 //

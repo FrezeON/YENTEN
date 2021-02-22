@@ -96,7 +96,7 @@ namespace YENTEN.Command.Commands.Game
                 int[] UserWinerTelegramID = new int[TeamHeadCount];
                 int counter = 0;
                 //
-                connection.Open();
+                DatabaseLibrary.ConnectionOpen();
                 Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=0";
                 SQLiteDataReader reader = Sqlcmd.ExecuteReader();
                 while (reader.Read())
@@ -106,7 +106,7 @@ namespace YENTEN.Command.Commands.Game
                     counter++;
                 }
                 reader.Close();
-                connection.Close();
+                DatabaseLibrary.ConnectionClose();
                 //
                 for (int i = 0; i < TeamHeadCount; i++)
                 {

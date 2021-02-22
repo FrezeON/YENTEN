@@ -11,6 +11,7 @@ namespace YENTEN.Command.Commands.Game
 {
     public class EnterTheGame : Command
     {
+        private static SQLiteConnection connection;
         public override string[] Names { get; set; } = new string[] { "Игра", "Войти в игру" };
 
         public override void Execute(Message message, TelegramBotClient client)
@@ -22,28 +23,32 @@ namespace YENTEN.Command.Commands.Game
             decimal TeamTailsAmount =0;
             int TeamHeadCout = 0;
             int TeamTailsCout = 0;
-            string queryString = "SELECT max(rowid) FROM CurrentGame";
-            int maxRowID = DatabaseLibrary.ExecuteScalarInt(queryString);
-            queryString = "SELECT min(rowid) FROM CurrentGame";
-            int minRowID = DatabaseLibrary.ExecuteScalarInt(queryString);
-            for (int i = minRowID; i < maxRowID+1; i++)
+            //
+            //
+            connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
+            connection.Open();
+            SQLiteCommand Sqlcmd = connection.CreateCommand();
+            Sqlcmd.CommandText = "SELECT AmountYTN, Team FROM CurrentGame";
+            SQLiteDataReader reader = Sqlcmd.ExecuteReader();
+            while (reader.Read())
             {
-                queryString = "SELECT AmountYTN FROM CurrentGame WHERE rowid="+i;
-                decimal Amount = DatabaseLibrary.ExecuteScalarDecimal(queryString);
-                queryString = "SELECT Team FROM CurrentGame WHERE rowid=" + i;
-                int TeamNumber = DatabaseLibrary.ExecuteScalarInt(queryString) ;
-                //Console.WriteLine(TeamNumber + "      " + Amount);
-                if(TeamNumber == 0)
+                int TeamNumber = Convert.ToInt32(reader["Team"]);
+                decimal Amount = Convert.ToDecimal(reader["AmountYTN"]);
+                if (TeamNumber == 0)
                 {
+                    
                     TeamHeadAmount += Amount;
                     TeamHeadCout++;
                 }
-                else
+                else if(TeamNumber == 1)
                 {
+                    Amount = Convert.ToDecimal(reader["AmountYTN"]);
                     TeamTailsAmount += Amount;
                     TeamTailsCout++;
                 }
             }
+            reader.Close();
+            connection.Close();
             //
 
             //Процентное соотношение по балансу
@@ -57,7 +62,7 @@ namespace YENTEN.Command.Commands.Game
 
             //       
             //Поиск пользователя в игре
-            queryString = "SELECT COUNT(*) FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
+             string queryString = "SELECT COUNT(*) FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
             int UserExist = DatabaseLibrary.ExecuteScalarInt(queryString);
             queryString = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
             decimal AmountInCurrentGame = DatabaseLibrary.ExecuteScalarDecimal(queryString);
@@ -93,10 +98,22 @@ namespace YENTEN.Command.Commands.Game
             await client.SendTextMessageAsync(message.Chat.Id, "Куда дальше?", replyMarkup: markup);
             //
             //Берем данные пользователя
-            string queryString = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
-            decimal UserAmount = DatabaseLibrary.ExecuteScalarDecimal(queryString);
-            queryString = "SELECT Team FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
-            int UserTeamNumber = DatabaseLibrary.ExecuteScalarInt(queryString);
+            //
+            connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
+            connection.Open();
+            SQLiteCommand Sqlcmd = connection.CreateCommand();
+            Sqlcmd.CommandText = "SELECT AmountYTN, Team FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
+            SQLiteDataReader reader = Sqlcmd.ExecuteReader();
+            decimal UserAmount = 0;
+            int UserTeamNumber = 0;
+            while (reader.Read())
+            {
+                 UserAmount = Convert.ToDecimal(reader["AmountYTN"]);
+                 UserTeamNumber = Convert.ToInt32(reader["Team"]);
+            }
+            reader.Close();
+            connection.Close();
+            //
             string[] Teams = { "💿Орёл", "📀Решка" };
             //
             //Считаем потенциальный выигрыш
@@ -129,7 +146,7 @@ namespace YENTEN.Command.Commands.Game
             }
             else if (TeamHeadCout >= 1 && TeamTailsCout >= 1)
             {
-                queryString = "SELECT GameTime FROM NextGameTime WHERE GameTime !=0";
+                string queryString = "SELECT GameTime FROM NextGameTime WHERE GameTime !=0";
                 string StartTime = DatabaseLibrary.ExecuteScalarString(queryString);
 
                 await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
