@@ -112,7 +112,7 @@ namespace YENTEN.Command.Commands.Game
                  UserTeamNumber = Convert.ToInt32(reader["Team"]);
             }
             reader.Close();
-            connection.Close();
+            DatabaseLibrary.ConnectionClose();
             //
             string[] Teams = { "💿Орёл", "📀Решка" };
             //

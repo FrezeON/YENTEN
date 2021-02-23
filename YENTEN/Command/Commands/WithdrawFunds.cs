@@ -33,7 +33,7 @@ namespace YENTEN.Command.Commands
                 "\n" + UserWallet +
                 "\nОтветьте на седующее сообщение с суммой которую вы хотите вывести в формате" +
                 "\n14 или 14.41311"
-                + "\n❗️На данный момент минимальная сумма вывода составляет 30YTN❗️"
+                + "\n❗️На данный момент минимальная сумма вывода составляет 5YTN❗️"
                 +"\nКомиссия на вывод составляет - 5%"
                 + "\nЕсли вы хотите сменить кошелек для вывода обратитесь к оператору @UtkaZapas");
 
@@ -60,7 +60,7 @@ namespace YENTEN.Command.Commands
                 decimal Ballance = Convert.ToDecimal(Sqlcmd.ExecuteScalar());
                 connection.Close();
 
-                if (AmountWinthdraw <= Ballance && AmountWinthdraw > 30)
+                if (AmountWinthdraw <= Ballance && AmountWinthdraw >= 5)
                 {
                     connection.Open();
                     decimal AmountWinthdrawMinusСommission = AmountWinthdraw * 95 / 100;
@@ -72,6 +72,9 @@ namespace YENTEN.Command.Commands
                     Sqlcmd.Parameters.AddWithValue("@AmountWinthdraw", AmountWinthdrawMinusСommission);
                     Sqlcmd.Parameters.AddWithValue("@Сommission", Сommission);
                     Sqlcmd.ExecuteNonQuery();
+                    //Отправляем пользователю на счет
+                    YentenCalls.SendToAddress(UserWallet, AmountWinthdrawMinusСommission);
+                    //
                     //Обновляем баланс
                     Sqlcmd.CommandText = @"UPDATE BallanceCheck SET Ballance = :Ballance WHERE WalletIN=" + "'" + WalletIn + "'";
                     Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Decimal).Value = Ballance - AmountWinthdraw;
@@ -80,9 +83,8 @@ namespace YENTEN.Command.Commands
                     connection.Close();
 
                     await client.SendTextMessageAsync(message.Chat.Id, "✅Ваша заявка на вывод средств в размере:\n" + AmountWinthdraw + "YTN"
-                        + "\nС вычетом комисии вы получите ~" + AmountWinthdrawMinusСommission+"YTN"
-                        + "\nПодтвержденна!"
-                        + "\nЗаявки на вывод средств рассматриваются в ручном режиме");
+                        + "\nС вычетом комисии вы получите ~" + AmountWinthdrawMinusСommission + "YTN"
+                        + "\nПодтвержденна!");
                 }
                 else
                 {
