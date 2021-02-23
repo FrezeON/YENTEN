@@ -33,8 +33,8 @@ namespace YENTEN.Command.Commands
                 "\n" + UserWallet +
                 "\nОтветьте на седующее сообщение с суммой которую вы хотите вывести в формате" +
                 "\n14 или 14.41311"
-                + "\n❗️На данный момент минимальная сумма вывода составляет 5YTN❗️"
-                +"\nКомиссия на вывод составляет - 5%"
+                + "\n❗️На данный момент минимальная сумма вывода составляет 1YTN❗️"
+                +"\nКомиссия на вывод составляет - 3%"
                 + "\nЕсли вы хотите сменить кошелек для вывода обратитесь к оператору @UtkaZapas");
 
             await client.SendTextMessageAsync(message.Chat.Id, "Подтверждаю", ParseMode.Default, false, false, 0, replyMarkup: new ForceReplyMarkup { Selective = true });
@@ -60,10 +60,10 @@ namespace YENTEN.Command.Commands
                 decimal Ballance = Convert.ToDecimal(Sqlcmd.ExecuteScalar());
                 connection.Close();
 
-                if (AmountWinthdraw <= Ballance && AmountWinthdraw >= 5)
+                if (AmountWinthdraw <= Ballance && AmountWinthdraw >= 1)
                 {
                     connection.Open();
-                    decimal AmountWinthdrawMinusСommission = AmountWinthdraw * 95 / 100;
+                    decimal AmountWinthdrawMinusСommission = AmountWinthdraw * 97 / 100;
                     decimal Сommission = AmountWinthdraw - AmountWinthdrawMinusСommission;
                     //Создаем заявку
                     Sqlcmd.CommandText = "INSERT INTO WithdrawFunds VALUES(@TelegramID, @UserWallet, @AmountWinthdraw, @Сommission)";
@@ -85,6 +85,9 @@ namespace YENTEN.Command.Commands
                     await client.SendTextMessageAsync(message.Chat.Id, "✅Ваша заявка на вывод средств в размере:\n" + AmountWinthdraw + "YTN"
                         + "\nС вычетом комисии вы получите ~" + AmountWinthdrawMinusСommission + "YTN"
                         + "\nПодтвержденна!");
+                    string log = DateTime.Now + "  [Log]: Вывод с баланса: \nCумма на кошелек: " + AmountWinthdraw + "\nКомиссия: " + Сommission + "\nПрищло на кошелек: " + AmountWinthdrawMinusСommission;
+                    System.IO.File.AppendAllText("log.txt", log);
+                    Console.WriteLine(log);
                 }
                 else
                 {

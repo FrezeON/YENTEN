@@ -18,11 +18,13 @@ namespace YENTEN.Command.CMDcommands
 
         public override void Execute(string comandText)
         {
-            if(comandText == "StartGame")
+            TimeZoneInfo moscowTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
+            DateTime moscowDateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, moscowTimeZone);
+            if (comandText == "StartGame")
             {
                 string queryString = "DELETE FROM NextGameTime";
                 DatabaseLibrary.ExecuteNonQuery(queryString);
-                queryString = "INSERT INTO NextGameTime VALUES('"+ Convert.ToString(DateTime.Now.AddMinutes(5).AddHours(1).ToShortTimeString())+"');";
+                queryString = "INSERT INTO NextGameTime VALUES('"+ Convert.ToString(moscowDateTime) +"');";
                 DatabaseLibrary.ExecuteNonQuery(queryString);
                 StartGameCheck();
             }
@@ -42,6 +44,8 @@ namespace YENTEN.Command.CMDcommands
         
         private static void GameStart(Object source, ElapsedEventArgs e)
         {
+            TimeZoneInfo moscowTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
+            DateTime moscowDateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, moscowTimeZone);
             string queryString = "SELECT count(*) FROM CurrentGame WHERE  AmountYTN=0 AND  Team=0";
             int HeadAmountZERO = DatabaseLibrary.ExecuteScalarInt(queryString);
             queryString = "SELECT count(*) FROM CurrentGame WHERE  AmountYTN=0 AND  Team=1";
@@ -56,7 +60,7 @@ namespace YENTEN.Command.CMDcommands
                 GameCheck.Dispose();
                 queryString = "DELETE FROM NextGameTime";
                 DatabaseLibrary.ExecuteNonQuery(queryString);
-                queryString = "INSERT INTO NextGameTime VALUES('"+ Convert.ToString(DateTime.Now.AddMinutes(5).AddHours(1).ToShortTimeString())+"');";
+                queryString = "INSERT INTO NextGameTime VALUES('"+ Convert.ToString(moscowDateTime) +"');";
                 DatabaseLibrary.ExecuteNonQuery(queryString);
                 GameStartTimer = new System.Timers.Timer(300000);
                 GameStartTimer.Elapsed += GameProcess.Run;
