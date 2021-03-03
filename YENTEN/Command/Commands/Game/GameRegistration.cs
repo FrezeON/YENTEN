@@ -26,7 +26,7 @@ namespace YENTEN.Command.Commands.Game
             Sqlcmd.CommandText = "SELECT COUNT(*) FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
             int UserExist = Convert.ToInt32(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
-            double AmountInCurrentGame = Convert.ToDouble(Sqlcmd.ExecuteScalar());
+            decimal AmountInCurrentGame = Convert.ToDecimal(Sqlcmd.ExecuteScalar());
             connection.Close();
 
             //Получаем ID команды
@@ -46,19 +46,23 @@ namespace YENTEN.Command.Commands.Game
                 
                 await client.SendTextMessageAsync(message.Chat.Id, "Введите Вашу ставку в формате 14 или (14.531)", ParseMode.Default, false, false, 0, replyMarkup: new ForceReplyMarkup { Selective = true });
                 connection.Open();
+                Sqlcmd.CommandText = "DELETE FROM CurrentGame WHERE TelegramID=0";
+                Sqlcmd.ExecuteNonQuery();
                 Sqlcmd.CommandText = "INSERT INTO CurrentGame VALUES(@TelegramID, @AmountYTN, @Team)";
                 Sqlcmd.Parameters.AddWithValue("@TelegramID", message.From.Id);
                 Sqlcmd.Parameters.AddWithValue("@AmountYTN", 0);
                 Sqlcmd.Parameters.AddWithValue("@Team", TeamId);
                 Sqlcmd.ExecuteNonQuery();
-                connection.Close();
+                connection.Close(); 
             }
             else if (AmountInCurrentGame == 0)
             {
 
                 connection.Open();
                 Sqlcmd.CommandText = @"UPDATE CurrentGame SET Team = :Team WHERE TelegramID=" + message.Chat.Id;
-                Sqlcmd.Parameters.Add("Team", System.Data.DbType.Single).Value = TeamId;
+                Sqlcmd.Parameters.Add("Team", System.Data.DbType.Decimal).Value = TeamId;
+                Sqlcmd.ExecuteNonQuery();
+                Sqlcmd.CommandText = "DELETE FROM CurrentGame WHERE TelegramID = 0";
                 Sqlcmd.ExecuteNonQuery();
                 connection.Close();
                 await client.SendTextMessageAsync(message.Chat.Id, "Введите Вашу ставку в формате 14 или (14.531)", ParseMode.Default, false, false, 0, replyMarkup: new ForceReplyMarkup { Selective = true });
@@ -114,36 +118,36 @@ namespace YENTEN.Command.Commands.Game
             Sqlcmd.CommandText = "SELECT WalletIN FROM UserInfo WHERE TelegramID=" + message.Chat.Id;
             string WalletIN = Convert.ToString(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = "SELECT Ballance FROM BallanceCheck WHERE WalletIN=" + "'"+WalletIN+"'";
-            double AmountOnBalance = Convert.ToDouble(Sqlcmd.ExecuteScalar());
+            decimal AmountOnBalance = Convert.ToDecimal(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE TelegramID=" + message.Chat.Id;
-            double AmountInCurrentGame = Convert.ToDouble(Sqlcmd.ExecuteScalar());
+            decimal AmountInCurrentGame = Convert.ToDecimal(Sqlcmd.ExecuteScalar());
             connection.Close();
             //
             if (UserExist == 0 || AmountInCurrentGame ==0)
             {
-                double AmountYTN=0;
+                decimal AmountYTN =0;
                 try
                 {
                     
-                    AmountYTN = Convert.ToDouble(message.Text.Replace(".",","));
+                    AmountYTN = Convert.ToDecimal(message.Text.Replace(".",","));
                 }
                 catch (Exception)
                 {
                     await client.SendTextMessageAsync(message.Chat.Id, "Введите Вашу ставку в формате 14 или (14.531)", ParseMode.Default, false, false, 0, replyMarkup: new ForceReplyMarkup { Selective = true });
                 }
                 
-                if(AmountOnBalance >= AmountYTN && AmountYTN > 0.03)
+                if(AmountOnBalance >= AmountYTN && AmountYTN > 0.03m)
                 {
                     //Добавляем запись в игру
                     connection.Open();
                     Sqlcmd.CommandText = @"UPDATE CurrentGame SET AmountYTN = :AmountYTN WHERE TelegramID=" + message.Chat.Id;
-                    Sqlcmd.Parameters.Add("AmountYTN", System.Data.DbType.Single).Value = AmountYTN;
+                    Sqlcmd.Parameters.Add("AmountYTN", System.Data.DbType.Decimal).Value = AmountYTN;
                     Sqlcmd.ExecuteNonQuery();
                     connection.Close();
                     //Обновляем баланс пользователя   
                     connection.Open();
                     Sqlcmd.CommandText = @"UPDATE BallanceCheck SET Ballance = :Ballance WHERE WalletIN=" +"'"+WalletIN+"'";
-                    Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Single).Value = AmountOnBalance-AmountYTN;
+                    Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Decimal).Value = AmountOnBalance-AmountYTN;
                     Sqlcmd.ExecuteNonQuery();
                     connection.Close();
                     await client.SendTextMessageAsync(message.Chat.Id, "Ваша ставка принята, нажмите кнопку 🎮Игра для большей информации", replyMarkup: Main);

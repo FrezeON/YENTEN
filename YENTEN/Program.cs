@@ -43,17 +43,28 @@ namespace YENTEN
             commandsCMD.Add(new StartAndStopGame());
             commandsCMD.Add(new SendNotif());
             // Cписок команд заканчивается здесь(для консоли)
-            SetTimer();
-            client.StartReceiving();
-            client.OnMessage += OnMessageHandler;
-            Console.WriteLine(DateTime.Now+ "  [Log]: Bot started");
-            for (; ;)
+            try
             {
-                    OnConsoleHandler();
+
+                SetTimer();
+                client.StartReceiving();
+                client.OnMessage += OnMessageHandler;
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red; Console.WriteLine(DateTime.Now + "  [Log]: Ошибка OnMessageHandler: " + e);
+                Console.ForegroundColor = ConsoleColor.White;
+                System.IO.File.AppendAllText("log.txt", (DateTime.Now + "  [Log]: Ошибка OnMessageHandler: " + e));
             }
             
+            Console.WriteLine(DateTime.Now + "  [Log]: Bot started");
+            for (; ; )
+            {
+               OnConsoleHandler();
+            }
 
         }
+
         private static void OnConsoleHandler()
         {
             string commandText = Console.ReadLine();
@@ -83,9 +94,9 @@ namespace YENTEN
                   
                 }
             }
-           if (message.ReplyToMessage != null && message.ReplyToMessage.Text == "Вставсте адресс вашего колька." +
+           if (message.ReplyToMessage != null && message.ReplyToMessage.Text == "Вставьте адрес вашего кошелька." +
                     "\nAдрес кошелька должен быть похож на это: YnNhhuHjnqpk86fdiXd3SXo5DXozEE4Wxv"
-                    + "\nВ случае неправильного ввода авдресса необходимо обратится к оператору @UtkaZapas")
+                    + "\nВ случае неправильного ввода адреса необходимо обратится к оператору  @UtkaZapas")
            {
                 Registration.StrartReg(message, client);
            }

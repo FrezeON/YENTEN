@@ -17,57 +17,37 @@ namespace YENTEN
 
         public static async void StrartReg (Message message, TelegramBotClient client)
         {
-         connection = new SQLiteConnection("Data Source=MainDB1.db");
-         SQLiteCommand Sqlcmd = connection.CreateCommand();
-         string UserWallet = message.Text;
-        connection.Open();
-                Sqlcmd.CommandText = "SELECT * FROM RawWallets WHERE ROWID= (SELECT min(ROWID) FROM RawWallets)";
-                string WalletIN= Convert.ToString(Sqlcmd.ExecuteScalar());
-            if (WalletIN == "")
+            string queryString = "SELECT count(*) FROM UserInfo WHERE TelegramID=" + message.Chat.Id;
+            int check = DatabaseLibrary.ExecuteScalarInt(queryString);
+            if(check == 0)
             {
-                await client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
-                await client.SendTextMessageAsync(message.Chat.Id, "К сожалению в базе нет свободных адресов для регистрации.\nОбратитесь за помощью к Оператору @UtkaZapas");
-                var markup = new ReplyKeyboardMarkup();
-                markup.Keyboard = new KeyboardButton[][]
-                {
-                new KeyboardButton[]
-                {
-                new KeyboardButton("🔑Регистрация")
-                }
-                };
-                markup.OneTimeKeyboard = true;
-                await client.SendTextMessageAsync(message.Chat.Id, "Для начала нажмите кнопку 🔑Регистрация", replyMarkup: markup);
-            }
-            else
-            {
-                Sqlcmd.CommandText = "DELETE FROM RawWallets WHERE ROWID=(SELECT min(ROWID) FROM RawWallets)";
-                Sqlcmd.ExecuteNonQuery();
-                Sqlcmd.CommandText = "INSERT OR IGNORE INTO UserInfo VALUES(@TelegramID, @UserWallet,@WalletIN)";
-                Sqlcmd.Parameters.AddWithValue("@TelegramID", message.From.Id);
-                Sqlcmd.Parameters.AddWithValue("@UserWallet", UserWallet);
-                Sqlcmd.Parameters.AddWithValue("@WalletIN", WalletIN);
-                Sqlcmd.ExecuteNonQuery();
-                //Вносим в BallanceCheck
-                Sqlcmd.CommandText = "INSERT OR IGNORE INTO BallanceCheck VALUES(@WalletIN, @Ballance, @LastIN, @LastAcceted)";
-                Sqlcmd.Parameters.AddWithValue("@WalletIN", WalletIN);
-                Sqlcmd.Parameters.AddWithValue("@Ballance", 0);
-                Sqlcmd.Parameters.AddWithValue("@LastIN", 0);
-                Sqlcmd.Parameters.AddWithValue("@LastAcceted", 0);
-                Sqlcmd.ExecuteNonQuery();
+                connection = new SQLiteConnection("Data Source=MainDB1.db");
+                SQLiteCommand Sqlcmd = connection.CreateCommand();
+                string UserWallet = message.Text;
+                //Генерируем новый адрес
+                string WalletIN = YentenCalls.GetNewAddress();
                 //
-                connection.Close();
-
+                queryString = "INSERT INTO UserInfo VALUES('" + message.From.Id + "','" + UserWallet + "','" + WalletIN + "')";
+                DatabaseLibrary.ExecuteNonQuery(queryString);
+                //Вносим в BallanceCheck
+                queryString = "INSERT OR IGNORE INTO BallanceCheck VALUES('" + WalletIN + "','" + 0 + "','" + 0 + "')";
+                DatabaseLibrary.ExecuteNonQuery(queryString);
+                //
                 await client.SendChatActionAsync(message.Chat.Id, ChatAction.Typing);
                 await client.SendTextMessageAsync(message.Chat.Id, "Поздравляю, Вы зарегистрированы!");
                 MainMenu.SendMAinMenu(client, message);
                 Console.WriteLine(DateTime.Now + "  [Log]: "); Console.ForegroundColor = ConsoleColor.Green; Console.Write("НОВЫЙ ПОЛЬЗОВАТЕЛЬ!");
                 Console.ForegroundColor = ConsoleColor.White; Console.WriteLine("\nID: " + message.Chat.Id + "\nWallet: " + UserWallet + "\nWalletIN: " + WalletIN);
                 System.IO.File.AppendAllText("log.txt", DateTime.Now + "  [Log]: НОВЫЙ ПОЛЬЗОВАТЕЛЬ!" +
-                    "\nID: " + message.Chat.Id + 
-                    "\nWallet: " + UserWallet + 
+                    "\nID: " + message.Chat.Id +
+                    "\nWallet: " + UserWallet +
                     "\nWalletIN: " + WalletIN);
+
             }
-              
+            else
+            {
+                await client.SendTextMessageAsync(message.Chat.Id, "Вы  уже зарегистрированы!");
+            }
         }
     }
 }

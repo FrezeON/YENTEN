@@ -6,6 +6,11 @@ namespace YENTEN
 {
     public static class  Config
     {
-        public static string Token = "1592859114:AAFaMHckyJLvXdxD-hNZl2f98XangfcRrcc";
+        public static string Token = "";
+        public static string RPClogin = "user";
+        public static string RPCpass = "x";
     }
+
 }
+
+

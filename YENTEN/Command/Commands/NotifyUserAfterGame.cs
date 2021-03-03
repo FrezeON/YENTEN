@@ -36,6 +36,8 @@ namespace YENTEN.Command.Commands
             if(NotificationStatus == 0)
             {
                 connection.Open();
+                Sqlcmd.CommandText = "SELECT WInners FROM GameHistory WHERE GameID=" + MaxGameID;
+                string Winners = Convert.ToString(Sqlcmd.ExecuteScalar());
                 Sqlcmd.CommandText = "SELECT AllPlayers FROM GameHistory WHERE GameID="+MaxGameID;
                 string AllPlayers = Convert.ToString(Sqlcmd.ExecuteScalar());
                 connection.Close();
@@ -43,12 +45,25 @@ namespace YENTEN.Command.Commands
                 Match matchAmount = Regex.Match(AllPlayers, "\\),(.*?)=\\(");
                 for(; ; )
                 {
+                    
                     if(matchAmount.Groups[1].Value != "")
                     {
                         try
                         {
-                            await client.SendTextMessageAsync(matchAmount.Groups[1].Value, "Игра №:" + MaxGameID + " завершилась!"
-                          + "\nЧтобы посмотреть результаты перейдите в раздел \"📅История\"");
+                            if (Winners.Contains(matchAmount.Groups[1].Value))
+                            {
+                                Match matchAmount2 = Regex.Match(AllPlayers, Convert.ToString(matchAmount.Groups[1].Value) + "=\\((.*?):(.*?)\\)");
+                                await client.SendTextMessageAsync(matchAmount.Groups[1].Value, "❗️Игра №:" + MaxGameID + " завершилась!"
+                                    + "\n💰Ваша ставка: " + matchAmount2.Groups[2].Value+"YTN"
+                                    + "\n💎Ваш выигрыш: " + matchAmount2.Groups[1].Value+"YTN");
+                            }
+                            else
+                            {
+                                Match matchAmountLoser = Regex.Match(AllPlayers, Convert.ToString(matchAmount.Groups[1].Value) + "=\\((.*?)\\)");
+                                await client.SendTextMessageAsync(matchAmount.Groups[1].Value, "❗️Игра №:" + MaxGameID + " завершилась!"
+                                + "\n💰Ваш проигрыш: " + matchAmountLoser.Groups[1].Value+"YTN");
+                            }
+
                         }
                         catch(Exception)
                         {

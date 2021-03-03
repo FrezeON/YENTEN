@@ -12,27 +12,46 @@ namespace YENTEN.Command.CMDcommands
         private static SQLiteConnection connection;
         public override async void Execute(string comandText)
         {
-            client = new TelegramBotClient(Config.Token);
-            connection = new SQLiteConnection("Data Source=MainDB1.db");
             if (comandText== "Send:")
             {
+                client = new TelegramBotClient(Config.Token);
                 string Text = Console.ReadLine();
-                SQLiteCommand Sqlcmd = connection.CreateCommand();
-                connection.Open();
-                Sqlcmd.CommandText = "SELECT count(TelegramID) FROM UserInfo";
-                int UserCount = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-                Sqlcmd.CommandText = "SELECT TelegramID FROM UserInfo";
-                SQLiteDataReader reader = Sqlcmd.ExecuteReader();
-                int[] UserID = new int[UserCount];
-                int Counter = 0;
-                while (reader.Read())
+                string queryString = "SELECT count(TelegramID) FROM UserInfo";
+                int UserCount = DatabaseLibrary.ExecuteScalarInt(queryString);
+                try
                 {
-                    UserID[Counter] = Convert.ToInt32(reader["TelegramID"]);
-                    await client.SendTextMessageAsync(UserID[Counter], Text);
-                    Counter++;
+                    connection = new SQLiteConnection("Data Source=MainDB1.db;Version=3;New=False;Compress=True;");
+                    SQLiteCommand Sqlcmd = connection.CreateCommand();
+                    connection.Open();
+                    Sqlcmd.CommandText = "SELECT TelegramID FROM UserInfo";
+                    SQLiteDataReader reader = Sqlcmd.ExecuteReader();
+                    int[] UserID = new int[UserCount];
+                    int Counter = 0;
+                     while (reader.Read())
+                     {
+                        try
+                        {
+
+                        Console.WriteLine("PUK");
+                        UserID[Counter] = Convert.ToInt32(reader["TelegramID"]);
+                        await client.SendTextMessageAsync(UserID[Counter], Text);
+                        Counter++;
+                        }catch(Exception e)
+                        {
+                            string appendText = DateTime.Now + "  [Log]: Ошибка отправки уведомления: " + e;
+                            Console.WriteLine(appendText);
+                            System.IO.File.AppendAllText("log.txt", appendText);
+                        }
                 }
-                reader.Close();
-                connection.Close();
+                     reader.Close();
+                    DatabaseLibrary.ConnectionClose();
+                }
+                catch(Exception e)
+                {
+                    string appendText = DateTime.Now + "  [Log]: Ошибка отправки уведомления: " + e;
+                    Console.WriteLine(appendText);
+                    System.IO.File.AppendAllText("log.txt", appendText);
+                }
             }
         }
     }
