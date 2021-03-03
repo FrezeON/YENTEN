@@ -25,39 +25,31 @@ namespace YENTEN.Command.Commands.Game
         {
             StartAndStopGame.GameStartTimer.Stop();
             StartAndStopGame.GameStartTimer.Dispose();
-            connection = new SQLiteConnection("Data Source=MainDB1.db");
-            SQLiteCommand Sqlcmd = connection.CreateCommand();
-            connection.Open();
             //Очистка от мусор
-            Sqlcmd.CommandText = "DELETE FROM CurrentGame WHERE  AmountYTN=0";
-            Sqlcmd.ExecuteNonQuery();
-
+            string queryString = "DELETE FROM CurrentGame WHERE  AmountYTN=0";
+            DatabaseLibrary.ExecuteNonQuery(queryString);
             //Количество участников
-            Sqlcmd.CommandText = "SELECT COUNT(*) FROM CurrentGame WHERE Team = 0";
-            int TeamHeadCount = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "SELECT COUNT(*) FROM CurrentGame WHERE Team = 1";
-            int TeamTailsCount = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            connection.Close();
+            queryString = "SELECT COUNT(*) FROM CurrentGame WHERE Team = 0";
+            int TeamHeadCount = DatabaseLibrary.ExecuteScalarInt(queryString);
+            queryString = "SELECT COUNT(*) FROM CurrentGame WHERE Team = 1";
+            int TeamTailsCount = DatabaseLibrary.ExecuteScalarInt(queryString);
             //
             //Запуск игры
-
-            GameLogic(connection, Sqlcmd, TeamHeadCount, TeamTailsCount);
+            GameLogic(TeamHeadCount, TeamTailsCount);
             //
             //Создание новой игры
-            connection.Open();
-            Sqlcmd.CommandText ="DELETE FROM CurrentGame";
-            Sqlcmd.ExecuteNonQuery();
-            Sqlcmd.CommandText = "INSERT INTO CurrentGame VALUES(@TelegramID, @AmountYTN,@Team)";
-            Sqlcmd.Parameters.AddWithValue("@TelegramID", 0);
-            Sqlcmd.Parameters.AddWithValue("@AmountYTN", 0);
-            Sqlcmd.Parameters.AddWithValue("@Team", 0);
-            Sqlcmd.ExecuteNonQuery();
-            connection.Close();
+            queryString = "DELETE FROM CurrentGame";
+            DatabaseLibrary.ExecuteNonQuery(queryString);
+            queryString = "INSERT INTO CurrentGame VALUES('"+0+"','"+0+"','"+0+"')";
+            DatabaseLibrary.ExecuteNonQuery(queryString);
             //
         }
 
-        private static void GameLogic(SQLiteConnection connection, SQLiteCommand Sqlcmd, int TeamHeadCount, int TeamTailsCount)
+        private static void GameLogic(int TeamHeadCount, int TeamTailsCount)
         {
+            Console.WriteLine("Запуск игры!");
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
+            SQLiteCommand Sqlcmd = connection.CreateCommand();
             //Парсер Random.org
             string urlAddress = "https://www.random.org/integers/?num=1&min=0&max=1&col=1&base=10&format=plain&rnd=new";
             int TeamWinID =Convert.ToInt32(BallanceCheck.getResponse(urlAddress));
@@ -65,17 +57,16 @@ namespace YENTEN.Command.Commands.Game
             //Подсчет суммы по командам     Количество игроков в командах     Head - орёл Tails- Решка
             decimal TeamHeadAmount = 0;
             decimal TeamTailsAmount = 0;
-            connection.Open();
-            Sqlcmd.CommandText = "SELECT max(rowid) FROM CurrentGame";
-            int maxRowID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "SELECT min(rowid) FROM CurrentGame";
-            int minRowID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
+            string queryString = "SELECT max(rowid) FROM CurrentGame";
+            int maxRowID = DatabaseLibrary.ExecuteScalarInt(queryString);
+            queryString = "SELECT min(rowid) FROM CurrentGame";
+            int minRowID = DatabaseLibrary.ExecuteScalarInt(queryString);
             for (int i = minRowID; i <= maxRowID; i++)
             {
-                Sqlcmd.CommandText = "SELECT AmountYTN FROM CurrentGame WHERE rowid=" + i;
-                decimal Amount = Convert.ToDecimal(Sqlcmd.ExecuteScalar());
-                Sqlcmd.CommandText = "SELECT Team FROM CurrentGame WHERE rowid=" + i;
-                int TeamNumber = Convert.ToInt32(Sqlcmd.ExecuteScalar());
+                queryString = "SELECT AmountYTN FROM CurrentGame WHERE rowid=" + i;
+                decimal Amount = DatabaseLibrary.ExecuteScalarDecimal(queryString);
+                queryString = "SELECT Team FROM CurrentGame WHERE rowid=" + i;
+                int TeamNumber = DatabaseLibrary.ExecuteScalarInt(queryString);
                 if (TeamNumber == 0)
                 {
                     TeamHeadAmount += Amount;
@@ -85,7 +76,6 @@ namespace YENTEN.Command.Commands.Game
                     TeamTailsAmount += Amount;
                 }
             }
-            connection.Close();
             int LoserCounter = 0;
             int WinnersCounter = 0;
             if (TeamWinID == 0)
@@ -96,7 +86,9 @@ namespace YENTEN.Command.Commands.Game
                 int[] UserWinerTelegramID = new int[TeamHeadCount];
                 int counter = 0;
                 //
-                DatabaseLibrary.ConnectionOpen();
+                connection = new SQLiteConnection("Data Source=MainDB1.db");
+                Sqlcmd = connection.CreateCommand();
+                connection.Open();
                 Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=0";
                 SQLiteDataReader reader = Sqlcmd.ExecuteReader();
                 while (reader.Read())
@@ -106,7 +98,7 @@ namespace YENTEN.Command.Commands.Game
                     counter++;
                 }
                 reader.Close();
-                DatabaseLibrary.ConnectionClose();
+                connection.Close();
                 //
                 for (int i = 0; i < TeamHeadCount; i++)
                 {
@@ -128,6 +120,8 @@ namespace YENTEN.Command.Commands.Game
 
                 int[] UserLoserTelegramID = new int[TeamHeadCount];
                 counter = 0;
+                connection = new SQLiteConnection("Data Source=MainDB1.db");
+                Sqlcmd = connection.CreateCommand();
                 connection.Open();
                 Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=1";
                 SQLiteDataReader reader2 = Sqlcmd.ExecuteReader();
@@ -166,6 +160,8 @@ namespace YENTEN.Command.Commands.Game
                 int counter = 0;
 
                 //Запись данных победителей в массивы
+                connection = new SQLiteConnection("Data Source=MainDB1.db");
+                Sqlcmd = connection.CreateCommand();
                 connection.Open();
                 Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=1";
                 SQLiteDataReader reader4 = Sqlcmd.ExecuteReader();
@@ -198,6 +194,7 @@ namespace YENTEN.Command.Commands.Game
                 decimal[] UserLoserAmount = new decimal[TeamHeadCount];
                 int[] UserLoserTelegramID = new int[TeamHeadCount];
                 counter = 0;
+                connection = new SQLiteConnection("Data Source=MainDB1.db");
                 connection.Open();
                 Sqlcmd.CommandText = "SELECT TelegramID, AmountYTN FROM CurrentGame WHERE Team=0";
                 SQLiteDataReader reader3 = Sqlcmd.ExecuteReader();
@@ -229,11 +226,9 @@ namespace YENTEN.Command.Commands.Game
                 //
             }
             //Добавляем в лог запись игры и выводим в консоль
-            connection.Open();
-            Sqlcmd.CommandText = "SELECT max(GameID) FROM GameHistory";
-            int GameID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            connection.Close();
-            string appendText = DateTime.Now + "  [Log]: Game № " +GameID+
+            queryString = "SELECT max(GameID) FROM GameHistory";
+            int GameID = DatabaseLibrary.ExecuteScalarInt(queryString);
+            string appendText = "\n"+DateTime.Now + "  [Log]: Game № " +GameID+
                 "\nКоличество участников: "+(TeamHeadCount+TeamTailsCount)
                 +"\nКоличество участников команда Ореёл: "+TeamHeadCount+"  Баланс команды: "+TeamHeadAmount
                 + "\nКоличество участников команда Решка: " + TeamTailsCount + "  Баланс команды: " + TeamTailsAmount
@@ -251,11 +246,13 @@ namespace YENTEN.Command.Commands.Game
         private static void UniversalLogic(SQLiteConnection connection, SQLiteCommand Sqlcmd, int[] UserWinerTelegramID, decimal[] UserWinerAmount, int i)
         {
             //Добавляем выигрыш на счет
+           string queryString = "SELECT WalletIN FROM UserInfo WHERE TelegramID=" + UserWinerTelegramID[i];
+            string UserWinerWalletIN = DatabaseLibrary.ExecuteScalarString(queryString);
+            queryString = "SELECT Ballance FROM BallanceCheck WHERE WalletIN=" + "'" + UserWinerWalletIN + "'";
+            decimal UserWinerBallance = DatabaseLibrary.ExecuteScalarDecimal(queryString);
+            connection = new SQLiteConnection("Data Source=MainDB1.db");
+            Sqlcmd = connection.CreateCommand();
             connection.Open();
-            Sqlcmd.CommandText = "SELECT WalletIN FROM UserInfo WHERE TelegramID=" + UserWinerTelegramID[i];
-            string UserWinerWalletIN = Convert.ToString(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "SELECT Ballance FROM BallanceCheck WHERE WalletIN=" + "'" + UserWinerWalletIN + "'";
-            decimal UserWinerBallance = Convert.ToDecimal(Sqlcmd.ExecuteScalar());
             Sqlcmd.CommandText = @"UPDATE BallanceCheck SET Ballance = :Ballance WHERE WalletIN=" + "'" + UserWinerWalletIN + "'";
             Sqlcmd.Parameters.Add("Ballance", System.Data.DbType.Decimal).Value = UserWinerBallance + UserWinerAmount[i];
             Sqlcmd.ExecuteNonQuery();
@@ -267,22 +264,13 @@ namespace YENTEN.Command.Commands.Game
 
         private static void RecordToHistory(SQLiteConnection connection, SQLiteCommand Sqlcmd, string Losers, string Winners, int Team, string AllPlayers)
         {
-            Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
 
-            connection.Open();
-            Sqlcmd.CommandText = "SELECT max(GameID) FROM GameHistory";
-            int GameID = Convert.ToInt32(Sqlcmd.ExecuteScalar());
-            Sqlcmd.CommandText = "INSERT INTO GameHistory VALUES(@GameID, @Losers, @AllPlayers, @Winners, @GameDate, @Team, @NotificationStatus)"; 
-            Sqlcmd.Parameters.AddWithValue("@GameID", (GameID+1));
-            Sqlcmd.Parameters.AddWithValue("@Losers", Losers);
-            Sqlcmd.Parameters.AddWithValue("@Winners", Winners);
-            Sqlcmd.Parameters.AddWithValue("@AllPlayers", AllPlayers);
-            Sqlcmd.Parameters.AddWithValue("@GameDate", unixTimestamp);
-            Sqlcmd.Parameters.AddWithValue("@Team", Team);
-            Sqlcmd.Parameters.AddWithValue("@NotificationStatus", 0);
-            Sqlcmd.ExecuteNonQuery();
-
-            connection.Close();
+            TimeZoneInfo moscowTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
+            DateTime moscowDateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, moscowTimeZone);
+            string queryString = "SELECT max(GameID) FROM GameHistory";
+            int GameID = DatabaseLibrary.ExecuteScalarInt(queryString);
+            queryString = "INSERT INTO GameHistory VALUES('"+ (GameID + 1)+"','"+Losers +"','"+ AllPlayers+"','"+Winners+"','"+ moscowTimeZone + "','"+Team+"','"+ 0+"')";
+            DatabaseLibrary.ExecuteNonQuery(queryString);
         }
 
 

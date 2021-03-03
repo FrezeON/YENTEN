@@ -29,11 +29,20 @@ namespace YENTEN.Command.CMDcommands
                     int Counter = 0;
                      while (reader.Read())
                      {
+                        try
+                        {
+
                         Console.WriteLine("PUK");
                         UserID[Counter] = Convert.ToInt32(reader["TelegramID"]);
                         await client.SendTextMessageAsync(UserID[Counter], Text);
                         Counter++;
-                     }
+                        }catch(Exception e)
+                        {
+                            string appendText = DateTime.Now + "  [Log]: Ошибка отправки уведомления: " + e;
+                            Console.WriteLine(appendText);
+                            System.IO.File.AppendAllText("log.txt", appendText);
+                        }
+                }
                      reader.Close();
                     DatabaseLibrary.ConnectionClose();
                 }

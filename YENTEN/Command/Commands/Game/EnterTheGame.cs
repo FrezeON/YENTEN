@@ -131,7 +131,7 @@ namespace YENTEN.Command.Commands.Game
                 UserWinAmount = UserAmount + TeamHeadAmount * (UserPercent / 100);
             }
             //
-            if (TeamHeadPercent == 0)
+            if (TeamHeadPercent == 0 && TeamTailsPercent !=0)
             {
                 await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
                 + "\n💿Орёл: " + 0 + "  vs  📀Решка: " + TeamTailsCout
@@ -143,22 +143,29 @@ namespace YENTEN.Command.Commands.Game
                 + "\nВаш вклад в команду: " + Math.Round(UserPercent, 2) + "%"
                 + "\nПотенциальный выигрыш: " + UserWinAmount + "YTN"
                 + "\n👥Недостаточно игроков для начала игры!");
+            }else if (TeamHeadPercent!=0 && TeamTailsPercent == 0)
+            {
+                await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
+                + "\n💿Орёл: " + TeamHeadCout + "  vs  📀Решка: " + 0
+                + "\nКоличество монет по командам:"
+                + "\n💿Орёл: " + TeamHeadAmount + "YTN   vs  📀Решка: " + TeamTailsAmount
+                + "YTN \n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
+                + "\n\nВаша команда: " + Teams[UserTeamNumber]
+                + "\nСтавка: " + UserAmount + "YTN"
+                + "\nВаш вклад в команду: " + Math.Round(UserPercent, 2) + "%"
+                + "\nПотенциальный выигрыш: " + UserWinAmount + "YTN"
+                + "\n👥Недостаточно игроков для начала игры!");
             }
-            else if (TeamHeadCout >= 1 && TeamTailsCout >= 1)
+            else if (TeamHeadPercent != 0 && TeamTailsPercent != 0)
             {
                 string queryString = "SELECT GameTime FROM NextGameTime WHERE GameTime !=0";
                 string StartTime = DatabaseLibrary.ExecuteScalarString(queryString);
-
                 await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
-                     + "\n💿Орёл: " + (TeamHeadCout) + "  vs  📀Решка: " + TeamTailsCout
-                     + "\nКоличество монет по командам:"
-                     + "\n💿Орёл: " + TeamHeadAmount + "YTN   vs  📀Решка: " + TeamTailsAmount
-                     + "YTN \n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
-                     + "\n\nВаша команда: " + Teams[UserTeamNumber]
-                     + "\nСтавка: " + UserAmount + "YTN"
-                     + "\nВаш вклад в команду: " + Math.Round(UserPercent, 2) + "%"
-                     + "\nПотенциальный выигрыш: " + UserWinAmount + "YTN"
-                     + "\n⏰Раунд закончится: " + StartTime +" МСК");
+               + "\n💿Орёл: " + TeamHeadCout + "  vs  📀Решка: " + TeamTailsCout
+               + "\nКоличество монет по командам:"
+               + "\n💿Орёл: " + TeamHeadAmount + "YTN  vs  📀Решка: " + TeamTailsAmount
+               + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
+               + "\n⏰Раунд закончится: " + StartTime + " МСК");
             }
             else
             {
@@ -200,10 +207,10 @@ namespace YENTEN.Command.Commands.Game
                 + "\n💿Орёл: " + 0 + "  vs  📀Решка: " + TeamTailsCout
                 + "\nКоличество монет по командам:"
                 + "\n💿Орёл: " + TeamHeadAmount + "YTN  vs  📀Решка: " + TeamTailsAmount
-                + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%" 
+                + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
                 + "\n👥Недостаточно игроков для начала игры!");
             }
-            else if (TeamHeadCout>=1&& TeamTailsCout >=1)
+            else if (TeamHeadCout >= 1 && TeamTailsCout >= 1)
             {
                 string queryString = "SELECT GameTime FROM NextGameTime WHERE GameTime !=0";
                 string StartTime = DatabaseLibrary.ExecuteScalarString(queryString);
@@ -213,7 +220,18 @@ namespace YENTEN.Command.Commands.Game
                 + "\nКоличество монет по командам:"
                 + "\n💿Орёл: " + TeamHeadAmount + "YTN  vs  📀Решка: " + TeamTailsAmount
                 + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
-                + "\n⏰Раунд закончится: " + StartTime+" МСК");
+                + "\n⏰Раунд закончится: " + StartTime + " МСК");
+            }
+            else if (TeamHeadPercent != 0 && TeamTailsPercent!=0)
+            {
+                string queryString = "SELECT GameTime FROM NextGameTime WHERE GameTime !=0";
+                string StartTime = DatabaseLibrary.ExecuteScalarString(queryString);
+                await client.SendTextMessageAsync(message.Chat.Id, "Количество участников:"
+               + "\n💿Орёл: " + TeamHeadCout + "  vs  📀Решка: " + TeamTailsCout
+               + "\nКоличество монет по командам:"
+               + "\n💿Орёл: " + TeamHeadAmount + "YTN  vs  📀Решка: " + TeamTailsAmount
+               + "YTN\n💿: " + TeamHeadPercent + "%   vs  📀: " + TeamTailsPercent + "%"
+               + "\n⏰Раунд закончится: " + StartTime + " МСК");
             }
             else
             {

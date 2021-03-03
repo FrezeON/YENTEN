@@ -19,7 +19,8 @@ namespace YENTEN.Command.CMDcommands
         public override void Execute(string comandText)
         {
             TimeZoneInfo moscowTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
-            DateTime moscowDateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, moscowTimeZone);
+            DateTime moscowDateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, moscowTimeZone).AddMinutes(5);
+            Console.WriteLine(moscowDateTime);
             if (comandText == "StartGame")
             {
                 string queryString = "DELETE FROM NextGameTime";
@@ -37,15 +38,15 @@ namespace YENTEN.Command.CMDcommands
         public static void StartGameCheck()
         {
             GameCheck = new System.Timers.Timer(5000);
-            GameCheck.Elapsed += GameStart;
             GameCheck.AutoReset = true;
             GameCheck.Enabled = true;
+            GameCheck.Elapsed += GameStart;
         }
         
         private static void GameStart(Object source, ElapsedEventArgs e)
         {
             TimeZoneInfo moscowTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
-            DateTime moscowDateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, moscowTimeZone);
+            DateTime moscowDateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, moscowTimeZone).AddMinutes(5);
             string queryString = "SELECT count(*) FROM CurrentGame WHERE  AmountYTN=0 AND  Team=0";
             int HeadAmountZERO = DatabaseLibrary.ExecuteScalarInt(queryString);
             queryString = "SELECT count(*) FROM CurrentGame WHERE  AmountYTN=0 AND  Team=1";
@@ -56,6 +57,7 @@ namespace YENTEN.Command.CMDcommands
             int TeamTailsCount = DatabaseLibrary.ExecuteScalarInt(queryString);
             if ((TeamHeadCount- HeadAmountZERO) != 0 && (TeamTailsCount- TailsAmountZERO) != 0)
             {
+                Console.WriteLine(moscowTimeZone +" [Log:] Конец раунда в:"+moscowDateTime);
                 GameCheck.Stop();
                 GameCheck.Dispose();
                 queryString = "DELETE FROM NextGameTime";
@@ -63,9 +65,14 @@ namespace YENTEN.Command.CMDcommands
                 queryString = "INSERT INTO NextGameTime VALUES('"+ Convert.ToString(moscowDateTime) +"');";
                 DatabaseLibrary.ExecuteNonQuery(queryString);
                 GameStartTimer = new System.Timers.Timer(300000);
-                GameStartTimer.Elapsed += GameProcess.Run;
                 GameStartTimer.AutoReset = true;
                 GameStartTimer.Enabled = true;
+                GameStartTimer.Elapsed += GameProcess.Run;
+            }
+            else
+            {
+                GameCheck.Stop();
+                StartGameCheck();
             }
         }
     }

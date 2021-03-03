@@ -23,7 +23,7 @@ namespace YENTEN.Command.Commands
             string[] losers = new string[5];
             string[] Winners = new string[5];
             string[] AllPlayers = new string[5];
-            int[] GameDate = new int[5];
+            string[] GameDate = new string[5];
             int[] Team = new int[5];
             int Counter = 0;
             connection.Open();
@@ -39,7 +39,7 @@ namespace YENTEN.Command.Commands
                     losers[Counter] = Convert.ToString(reader["losers"]);
                     Winners[Counter] = Convert.ToString(reader["Winners"]);
                     AllPlayers[Counter] = Convert.ToString(reader["AllPlayers"]);
-                    GameDate[Counter] = Convert.ToInt32(reader["GameDate"]);
+                    GameDate[Counter] = Convert.ToString(reader["GameDate"]);
                     Team[Counter] = Convert.ToInt32(reader["Team"]);
                     Counter++;
                 }
@@ -62,14 +62,12 @@ namespace YENTEN.Command.Commands
             {
                 if (GameId[i] != 0)
                 {
-                    //Timespan в дату
-                    DateTime pDate = (new DateTime(1970, 1, 1, 0, 0, 0, 0)).AddSeconds(GameDate[i]);
                     //
                     if (Winners[i].Contains(Convert.ToString(message.Chat.Id)))
                     {
                         Match matchAmount = Regex.Match(AllPlayers[i], Convert.ToString(message.Chat.Id) + "=\\((.*?):(.*?)\\)");
                         await client.SendTextMessageAsync(message.Chat.Id, "📁Номер игры: " + GameId[i]
-                        + "\n📅Дата игры: " + pDate
+                        + "\n📅Дата игры: " + GameDate[i]
                         + "\n🛡Победила команда: " + Teams[Team[i]]
                         + "\n💰Ваша ставка: " + matchAmount.Groups[2].Value+"YTN"
                         + "\n💎Ваш выигрыш: " + matchAmount.Groups[1].Value+"YTN");
@@ -78,7 +76,7 @@ namespace YENTEN.Command.Commands
                     {
                         Match matchAmountLoser = Regex.Match(AllPlayers[i], Convert.ToString(message.Chat.Id) + "=\\((.*?)\\)");
                         await client.SendTextMessageAsync(message.Chat.Id, "📁Номер игры: " + GameId[i]
-                        + "\n📅Дата игры: " + pDate
+                        + "\n📅Дата игры: " + GameDate[i]
                         + "\n🛡Победила команда: " + Teams[Team[i]]
                         + "\n💔Ваш проигрыш: " + matchAmountLoser.Groups[1].Value+"YTN");
                     }
